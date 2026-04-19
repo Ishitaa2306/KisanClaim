@@ -18,7 +18,7 @@ class FarmStore {
 
   /** Seed the store on startup. */
   _initialise() {
-    const farms = generateFarms(100);
+    const farms = generateFarms(200);
     for (const farm of farms) {
       this._store.set(farm.farmId, farm);
     }
