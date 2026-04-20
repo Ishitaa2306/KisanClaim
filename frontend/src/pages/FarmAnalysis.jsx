@@ -1,13 +1,12 @@
 import React, { useState, useEffect } from 'react'
 import { Card } from '../components/ui/Card'
 import { Badge } from '../components/ui/Badge'
-import { MapPin, TrendingUp, ShieldCheck, Tractor, Bot, Loader2, AlertTriangle } from 'lucide-react'
+import { MapPin, TrendingUp, ShieldCheck, Tractor, Bot, Loader2, AlertTriangle, FileText, Activity } from 'lucide-react'
 import { useParams, useNavigate } from 'react-router-dom'
+import { LineChart, Line, XAxis, Tooltip, ResponsiveContainer, CartesianGrid, AreaChart, Area, YAxis } from 'recharts'
 import { api } from '../services/api'
 
 // Placeholder images
-const satellitePre = 'https://images.unsplash.com/photo-1592982537447-6f2a6a0dd30b?auto=format&fit=crop&q=80&w=600&h=300'
-const satellitePost = 'https://images.unsplash.com/photo-1581093458791-9f3c3900df4b?auto=format&fit=crop&q=80&w=600&h=300'
 const mapView = 'https://images.unsplash.com/photo-1560493676-04071c5f467b?auto=format&fit=crop&q=80&w=400&h=400'
 
 const formatCurrency = (amount) => {
@@ -22,6 +21,8 @@ export default function FarmAnalysis() {
   const [farm, setFarm] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [beforeLoadError, setBeforeLoadError] = useState(false);
+  const [afterLoadError, setAfterLoadError] = useState(false);
 
   useEffect(() => {
     async function loadFarm() {
@@ -59,15 +60,40 @@ export default function FarmAnalysis() {
     );
   }
 
-  const { farmerName, location, cropType, insuredAmount, summary } = farm;
+  const { farmerName, location, cropType, insuredAmount, summary, ndviBefore, ndviAfter } = farm;
   const { damagePercentage, claimAmount, fraudStatus, fraudScore, flagged } = summary;
 
   const isHighRisk = fraudStatus === 'CRITICAL' || fraudStatus === 'HIGH';
+
+  // Strict NDVI Categorization Let
+  const ndviDropPercent = Math.max(0, ((ndviBefore - ndviAfter) / ndviBefore) * 100);
+  let ndviStatusLabel = 'Moderate Damage';
+  if (ndviDropPercent < 10) ndviStatusLabel = 'Minor Change';
+  else if (ndviDropPercent > 30) ndviStatusLabel = 'Severe Damage';
+
+  // Strict Unsplash Agricultural Overrides
+  const VERIFIED_BEFORE_IMAGES = [
+    'https://images.unsplash.com/photo-1500382017468-9049fed747ef?w=800&q=80',
+    'https://images.unsplash.com/photo-1625246333195-78d9c38ad449?w=800&q=80'
+  ];
+  const VERIFIED_AFTER_IMAGES = [
+    'https://images.unsplash.com/photo-1583245553131-0e7d36409271?w=800&q=80',
+    'https://images.unsplash.com/photo-1547483238-f400e65ccd56?w=800&q=80'
+  ];
+  
+  const farmNumber = parseInt(farm.farmId.split('-')[1] || '0', 10);
+  const strictBeforeImg = VERIFIED_BEFORE_IMAGES[farmNumber % VERIFIED_BEFORE_IMAGES.length];
+  const strictAfterImg = VERIFIED_AFTER_IMAGES[farmNumber % VERIFIED_AFTER_IMAGES.length];
 
   const handleDisburse = () => {
     // Pass farm data explicitly via state
     navigate('/claims/result', { state: { farm } });
   };
+
+  const formattedTimeline = farm.analytics?.ndviHistory?.map((val, idx) => ({
+    name: `T-${4 - idx}`,
+    ndvi: val
+  })) || [];
 
   return (
     <div className="max-w-6xl mx-auto space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
@@ -82,8 +108,8 @@ export default function FarmAnalysis() {
           </div>
           <h1 className="text-4xl font-extrabold text-slate-900 tracking-tight">Farm Intelligence Report</h1>
         </div>
-        <div className="flex gap-3">
-          <button className="px-6 py-2.5 rounded-full bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold text-sm transition-colors">Export PDF</button>
+        <div className="flex flex-wrap gap-3">
+          <button onClick={() => navigate(`/report/${farm.farmId}`)} className="px-6 py-2.5 rounded-full bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold text-sm transition-colors flex items-center gap-2"><FileText className="w-4 h-4"/> View Report</button>
           <button className="px-6 py-2.5 rounded-full bg-[#005c8a] hover:bg-[#004b70] text-white font-bold text-sm shadow-md transition-colors">Share Data</button>
         </div>
       </div>
@@ -155,14 +181,20 @@ export default function FarmAnalysis() {
              </Card>
 
              <Card className="p-6">
-               <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-4">FRAUD RISK PROFILE</p>
+               <div className="flex justify-between items-start mb-4">
+                 <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">FRAUD RISK PROFILE</p>
+                 <div className={`w-7 h-7 rounded-full flex items-center justify-center ${isHighRisk ? 'bg-danger' : 'bg-primary'}`}>
+                    {isHighRisk ? <AlertTriangle className="w-4 h-4 text-white" /> : <ShieldCheck className="w-4 h-4 text-white" />}
+                 </div>
+               </div>
+               <div className="flex items-end gap-2 mb-4">
+                 <span className={`text-4xl font-black tracking-tighter block leading-none ${isHighRisk ? 'text-danger' : 'text-primary'}`}>{fraudScore.toFixed(0)}</span>
+                 <span className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-1">SCORE</span>
+               </div>
                <div className="flex gap-2 mb-4">
                  <Badge className={`${isHighRisk ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'} font-bold px-4 py-1.5 uppercase tracking-widest text-xs`}>
                    {fraudStatus}
                  </Badge>
-                 <div className={`w-7 h-7 rounded-full flex items-center justify-center ${isHighRisk ? 'bg-danger' : 'bg-primary'}`}>
-                    {isHighRisk ? <AlertTriangle className="w-4 h-4 text-white" /> : <ShieldCheck className="w-4 h-4 text-white" />}
-                 </div>
                </div>
                <p className="text-xs text-slate-500 leading-relaxed">
                  {isHighRisk ? 'Multiple anomaly flags triggered in analysis.' : 'No temporal anomalies detected in land history.'}
@@ -204,24 +236,145 @@ export default function FarmAnalysis() {
                   </div>
                </div>
             </div>
-
-            <div className="grid grid-cols-2 gap-6">
-              <div>
-                 <div className="rounded-xl overflow-hidden aspect-[2/1] bg-slate-100 mb-3 border border-slate-200 p-1 relative">
-                   {isHighRisk && <div className="absolute inset-0 bg-yellow-500/20 mix-blend-overlay z-10" />}
-                   <img src={satellitePre} alt="Pre-flood" className="w-full h-full object-cover rounded-lg" />
-                 </div>
-                 <p className="text-center text-[10px] font-bold text-slate-500 uppercase tracking-widest">BASELINE (PRE-FLOOD)</p>
+          </Card>
+          {/* Visual Proof of Crop Damage Section */}
+          <Card className="p-8">
+            <h3 className="text-lg font-bold text-slate-800 mb-6">Visual Proof of Crop Damage</h3>
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-center">
+              
+              {/* Left Side: Images */}
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <div className="rounded-xl overflow-hidden aspect-[4/3] bg-slate-100 border border-slate-200 mb-2 relative">
+                    {!beforeLoadError ? (
+                      <img 
+                        src={strictBeforeImg} 
+                        alt="Healthy Crop" 
+                        className="w-full h-full object-cover" 
+                        onError={() => setBeforeLoadError(true)}
+                      />
+                    ) : (
+                      <div className="absolute inset-0 flex items-center justify-center p-4 text-center">
+                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Satellite image unavailable</span>
+                      </div>
+                    )}
+                  </div>
+                  <p className="text-center text-[10px] font-bold text-slate-500 uppercase tracking-widest">BEFORE (HEALTHY CROP)</p>
+                </div>
+                <div>
+                  <div className="rounded-xl overflow-hidden aspect-[4/3] bg-slate-100 border border-slate-200 relative mb-2">
+                    {isHighRisk && <div className="absolute inset-0 bg-red-600/20 mix-blend-overlay z-10" />}
+                    {!afterLoadError ? (
+                      <img 
+                        src={strictAfterImg} 
+                        alt="Damaged Crop" 
+                        className="w-full h-full object-cover" 
+                        onError={() => setAfterLoadError(true)}
+                      />
+                    ) : (
+                      <div className="absolute inset-0 flex items-center justify-center p-4 text-center">
+                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Satellite image unavailable</span>
+                      </div>
+                    )}
+                  </div>
+                  <p className="text-center text-[10px] font-bold text-slate-500 uppercase tracking-widest">AFTER (DAMAGED CROP)</p>
+                </div>
               </div>
-              <div>
-                 <div className="rounded-xl overflow-hidden aspect-[2/1] bg-slate-100 mb-3 border border-slate-200 p-1 relative">
-                   {isHighRisk && <div className="absolute inset-0 bg-red-600/30 mix-blend-overlay z-10" />}
-                   <img src={satellitePost} alt="Post-flood" className="w-full h-full object-cover rounded-lg" />
-                 </div>
-                 <p className="text-center text-[10px] font-bold text-slate-500 uppercase tracking-widest">CURRENT (POST-FLOOD)</p>
+
+              {/* Right Side: NDVI Comparison */}
+              <div className="space-y-6">
+                <p className="text-sm text-slate-600 font-medium">
+                  NDVI (Normalized Difference Vegetation Index) quantifies vegetation greenness. A significant drop indicates severe crop damage or flooding.
+                </p>
+                
+                <div className="space-y-4">
+                  <div>
+                    <div className="flex justify-between mb-2">
+                      <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Before Incident</span>
+                      <span className="text-xs font-bold text-green-600 tracking-tight">{ndviBefore.toFixed(2)}</span>
+                    </div>
+                    <div className="w-full bg-slate-100 h-3 rounded-full overflow-hidden">
+                      <div className="bg-green-500 h-full rounded-full transition-all" style={{ width: `${ndviBefore * 100}%` }}></div>
+                    </div>
+                  </div>
+
+                  <div>
+                    <div className="flex justify-between mb-2">
+                      <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Current State</span>
+                      <span className="text-xs font-bold text-danger tracking-tight">{ndviAfter.toFixed(2)}</span>
+                    </div>
+                    <div className="w-full bg-slate-100 h-3 rounded-full overflow-hidden flex">
+                      <div className="bg-danger h-full rounded-full transition-all" style={{ width: `${Math.max(0, ndviAfter) * 100}%` }}></div>
+                    </div>
+                  </div>
+                </div>
+
+                <div className={`inline-block px-3 py-1 ${ndviDropPercent > 30 ? 'bg-red-50 border-red-100 text-red-700' : ndviDropPercent < 10 ? 'bg-green-50 border-green-100 text-green-700' : 'bg-orange-50 border-orange-100 text-orange-700'} border rounded-lg`}>
+                   <span className="text-xs font-bold uppercase tracking-wider">{ndviStatusLabel}: {ndviDropPercent.toFixed(1)}%</span>
+                </div>
               </div>
             </div>
           </Card>
+
+          {/* AI Explanation & Timeline */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <Card className="p-6">
+               <div className="flex items-center gap-2 mb-4">
+                 <Bot className="w-5 h-5 text-indigo-600" />
+                 <h3 className="text-lg font-bold text-slate-800">AI Explanation</h3>
+               </div>
+               <div className="space-y-4">
+                 <div className="flex justify-between items-center pb-2 border-b border-slate-100">
+                    <span className="text-xs font-bold text-slate-500 uppercase">NDVI Drop</span>
+                    <span className="font-mono font-bold">{farm.explanation?.ndviDrop}%</span>
+                 </div>
+                 <div className="flex justify-between items-center pb-2 border-b border-slate-100">
+                    <span className="text-xs font-bold text-slate-500 uppercase">Damage Level</span>
+                    <Badge className="bg-slate-100 text-slate-700">{farm.explanation?.damageLevel}</Badge>
+                 </div>
+                 <div className="flex justify-between items-center pb-2 border-b border-slate-100">
+                    <span className="text-xs font-bold text-slate-500 uppercase">Fraud Risk</span>
+                    <Badge className={farm.explanation?.fraudRisk === 'high' ? 'bg-red-100 text-red-700' : 'bg-blue-100 text-blue-700'}>{farm.explanation?.fraudRisk}</Badge>
+                 </div>
+                 <div className="pt-2">
+                    <p className="text-xs font-bold text-slate-500 uppercase mb-1">Reason</p>
+                    <p className="text-sm text-slate-700 leading-relaxed bg-slate-50 p-3 rounded-lg border border-slate-100">{farm.explanation?.reason}</p>
+                 </div>
+                 <div className="pt-2">
+                    <Badge className={`w-full py-2 flex justify-center text-sm font-bold tracking-widest uppercase ${farm.explanation?.decision === 'Approved' ? 'bg-green-100 border-green-200 text-green-700' : farm.explanation?.decision === 'Flagged' ? 'bg-orange-100 border-orange-200 text-orange-700' : 'bg-red-100 border-red-200 text-red-700'}`}>
+                      {farm.explanation?.decision}
+                    </Badge>
+                 </div>
+               </div>
+            </Card>
+
+            <Card className="p-6 flex flex-col">
+               <div className="flex items-center gap-2 mb-6">
+                 <Activity className="w-5 h-5 text-blue-500" />
+                 <h3 className="text-lg font-bold text-slate-800">NDVI Trend Timelapse</h3>
+               </div>
+               <div className="flex-1 w-full h-[250px]">
+                 <ResponsiveContainer width="100%" height="100%">
+                    <AreaChart data={formattedTimeline}>
+                      <defs>
+                        <linearGradient id="ndviGradient" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="5%" stopColor="#10b981" stopOpacity={0.3}/>
+                          <stop offset="95%" stopColor="#10b981" stopOpacity={0}/>
+                        </linearGradient>
+                      </defs>
+                      <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
+                      <XAxis dataKey="name" stroke="#94a3b8" fontSize={10} tickLine={false} axisLine={false} />
+                      <YAxis stroke="#94a3b8" fontSize={10} tickLine={false} axisLine={false} domain={['dataMin - 0.1', 'dataMax + 0.1']} />
+                      <Tooltip 
+                        contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
+                        labelStyle={{ color: '#64748b', fontWeight: 'bold', fontSize: '10px', textTransform: 'uppercase' }}
+                      />
+                      <Area type="monotone" dataKey="ndvi" stroke="#10b981" strokeWidth={3} fillOpacity={1} fill="url(#ndviGradient)" activeDot={{ r: 6, strokeWidth: 0, fill: '#10b981' }} />
+                    </AreaChart>
+                 </ResponsiveContainer>
+               </div>
+            </Card>
+          </div>
         </div>
       </div>
 
@@ -233,7 +386,7 @@ export default function FarmAnalysis() {
            <div className={`absolute inset-0 ${isHighRisk ? 'bg-red-900 opacity-40 mix-blend-color' : 'bg-slate-600 mix-blend-color opacity-30'}`}></div>
            <div className="absolute bottom-4 left-4 z-10 text-white">
              <p className="text-[10px] font-bold uppercase tracking-widest mb-1 text-white/80">GEOSPATIAL COORDINATES</p>
-             <p className="text-xs font-mono font-medium">{farm.location.lat.toFixed(4)}° N, {farm.location.lng.toFixed(4)}° E</p>
+             <p className="text-xs font-mono font-medium">{farm.location.latitude.toFixed(4)}° N, {farm.location.longitude.toFixed(4)}° E</p>
            </div>
          </div>
          

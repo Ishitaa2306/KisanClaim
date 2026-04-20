@@ -137,7 +137,7 @@ export default function FraudDetection() {
           const isCritical = s === 'CRITICAL' || s === 'HIGH';
           
           return (
-          <Card key={farm.farmId} onClick={() => navigate(`/farms/${farm.farmId}`)} className="p-4 flex items-center justify-between hover:border-red-200 transition-colors cursor-pointer group">
+          <Card key={farm.farmId} onClick={() => navigate(`/farm/${farm.farmId}`)} className="p-4 flex items-center justify-between hover:border-red-200 transition-colors cursor-pointer group">
             <div className="flex items-center gap-4 w-1/3">
               <div className="w-12 h-12 rounded-xl bg-slate-200 overflow-hidden relative">
                  <div className={`w-full h-full bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] ${isCritical ? 'from-yellow-300 to-red-600' : 'from-yellow-300 to-orange-500'} opacity-80`} />
@@ -201,7 +201,7 @@ export default function FraudDetection() {
             </div>
           </div>
           
-          <button onClick={() => navigate(`/farms/${showcaseFarm.farmId}`)} className="bg-[#1f2937] text-white hover:bg-black font-bold py-4 px-6 rounded-xl transition-colors text-sm text-center w-full shadow-lg">
+          <button onClick={() => navigate(`/analysis/${showcaseFarm.farmId}`)} className="bg-[#1f2937] text-white hover:bg-black font-bold py-4 px-6 rounded-xl transition-colors text-sm text-center w-full shadow-lg">
             Review Case Details
           </button>
         </div>

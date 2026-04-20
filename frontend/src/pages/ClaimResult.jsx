@@ -1,7 +1,8 @@
 import React from 'react'
 import { Card } from '../components/ui/Card'
-import { CheckCircle2, AlertTriangle, Satellite, Timer } from 'lucide-react'
+import { CheckCircle2, AlertTriangle, Satellite, Timer, Loader2 } from 'lucide-react'
 import { useLocation, useNavigate } from 'react-router-dom'
+import { api } from '../services/api'
 
 const formatCurrency = (amount) => {
   return new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR' }).format(amount);
@@ -11,9 +12,30 @@ export default function ClaimResult() {
   const location = useLocation();
   const navigate = useNavigate();
   
-  const farm = location.state?.farm;
+  const [displayFarm, setDisplayFarm] = React.useState(location.state?.farm || null);
+  const [loading, setLoading] = React.useState(!location.state?.farm);
 
-  if (!farm) {
+  React.useEffect(() => {
+    if (!displayFarm) {
+      // If no farm is passed, just fetch the first/latest one to show a demo context
+      api.getFarms({ limit: 1 }).then(res => {
+        if (res.data && res.data.length > 0) {
+          setDisplayFarm(res.data[0]);
+        }
+        setLoading(false);
+      }).catch(() => setLoading(false));
+    }
+  }, [displayFarm]);
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-[60vh]">
+        <Loader2 className="w-10 h-10 animate-spin text-primary opacity-50" />
+      </div>
+    );
+  }
+
+  if (!displayFarm) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[60vh] gap-4">
         <p className="text-slate-500 font-bold">No claim context found.</p>
@@ -24,7 +46,7 @@ export default function ClaimResult() {
     );
   }
 
-  const { fraudStatus, damagePercentage, claimAmount, flagged } = farm.summary;
+  const { fraudStatus, damagePercentage, claimAmount, flagged } = displayFarm.summary;
   const isHighRisk = flagged;
 
   // Simple current date for settlement
@@ -44,7 +66,7 @@ export default function ClaimResult() {
                </h1>
             </div>
             <p className="text-sm text-slate-600 leading-relaxed max-w-[280px]">
-               Our Aerial Guardian system has cross-referenced thermal, moisture, and multispectral data for Field ID #{farm.farmId}.
+               Our Aerial Guardian system has cross-referenced thermal, moisture, and multispectral data for Field ID #{displayFarm.farmId}.
             </p>
             
             <Card className="bg-slate-50 border-none shadow-none p-5 space-y-6 mt-8 max-w-[280px]">
@@ -82,7 +104,7 @@ export default function ClaimResult() {
                <h2 className="text-5xl font-black text-slate-900 tracking-tighter leading-none mb-4 relative z-10">
                  {isHighRisk ? 'Claim Audit\nRequired' : 'Claim Approved\nAutomatically'}
                </h2>
-               <p className="text-slate-600 text-sm mb-10 relative z-10">Policy ID: KC-2024-{farm.farmId}</p>
+               <p className="text-slate-600 text-sm mb-10 relative z-10">Policy ID: KC-2024-{displayFarm.farmId}</p>
 
                <div className="grid grid-cols-2 gap-4 text-left mb-8 relative z-10">
                  <div className="bg-slate-50 p-5 rounded-xl border border-slate-100">
@@ -116,8 +138,8 @@ export default function ClaimResult() {
                    <span className="text-[10px] font-bold text-danger">Recorded Fall Detected</span>
                  </div>
                  <div className="h-2.5 w-full bg-slate-200 flex rounded-full overflow-hidden">
-                    <div className="bg-primary transition-all" style={{ width: `${farm.ndviAfter * 100}%` }}></div>
-                    <div className="bg-danger transition-all" style={{ width: `${(farm.ndviBefore - farm.ndviAfter) * 100}%` }}></div>
+                    <div className="bg-primary transition-all" style={{ width: `${displayFarm.ndviAfter * 100}%` }}></div>
+                    <div className="bg-danger transition-all" style={{ width: `${(displayFarm.ndviBefore - displayFarm.ndviAfter) * 100}%` }}></div>
                  </div>
                </div>
 
@@ -125,7 +147,7 @@ export default function ClaimResult() {
                   <button className={`flex-1 ${isHighRisk ? 'bg-[#991b1b] hover:bg-[#7f1d1d]' : 'bg-[#0b6330] hover:bg-[#084b24]'} text-white font-bold py-4 rounded-xl shadow-lg transition-colors leading-tight`}>
                     {isHighRisk ? 'Forward to Audit Team' : 'Download Official\nCertificate'}
                   </button>
-                  <button onClick={() => navigate('/farms/' + farm.farmId)} className="flex-1 bg-[#cde4fd] hover:bg-[#b0d2fa] text-[#005c8a] font-bold py-4 rounded-xl transition-colors">
+                  <button onClick={() => navigate('/analysis/' + displayFarm.farmId)} className="flex-1 bg-[#cde4fd] hover:bg-[#b0d2fa] text-[#005c8a] font-bold py-4 rounded-xl transition-colors">
                     View Analysis Details
                   </button>
                </div>

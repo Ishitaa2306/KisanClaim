@@ -67,6 +67,20 @@ class FarmStore {
     }
     return groups;
   }
+
+  /**
+   * Create and save a new farm record.
+   * @param {object} farmData 
+   */
+  create(farmData) {
+    const id = farmData.farmId || `FARM-${String(this._store.size + 1).padStart(3, '0')}`;
+    const newFarm = {
+      ...farmData,
+      farmId: id,
+    };
+    this._store.set(id, newFarm);
+    return newFarm;
+  }
 }
 
 // Singleton — shared across the application

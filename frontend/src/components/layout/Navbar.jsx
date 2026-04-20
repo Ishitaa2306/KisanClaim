@@ -9,7 +9,7 @@ export function Navbar() {
     { label: 'Dashboard', path: '/' },
     { label: 'Farms', path: '/farms' },
     { label: 'Fraud Detection', path: '/fraud' },
-    { label: 'Claims', path: '/claims/result' },
+    { label: 'Claims', path: '/claims' },
   ]
   
   return (

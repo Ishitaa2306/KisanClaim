@@ -5,7 +5,8 @@
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
-    "dev": "node --watch server.js"
+    "dev": "node --watch server.js",
+    "start:all": "node -e \"console.log('\\n\\n======================================================\\n🌐 To see the Web Dashboard: http://localhost:5173/dashboard\\n📱 To see the Mobile Phone View: http://localhost:5173/mobile\\n======================================================\\n\\n')\" && concurrently \"npm run start\" \"npm run dev --prefix frontend\" \"npm start --prefix mobile\""
   },
   "keywords": [
     "crop-insurance",
@@ -23,5 +24,8 @@
     "helmet": "^8.0.0",
     "morgan": "^1.10.0",
     "uuid": "^11.1.0"
+  },
+  "devDependencies": {
+    "concurrently": "^9.2.1"
   }
 }

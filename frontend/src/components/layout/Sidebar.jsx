@@ -1,6 +1,6 @@
 import React from 'react'
 import { Link, useLocation } from 'react-router-dom'
-import { Satellite, Activity, FileText, Settings, Plus } from 'lucide-react'
+import { Satellite, Activity, FileText, Settings, Plus, Map } from 'lucide-react'
 import { cn } from '../../lib/utils'
 import { Button } from '../ui/Button'
 
@@ -8,10 +8,10 @@ export function Sidebar() {
   const location = useLocation()
   
   const navItems = [
-    { label: 'SATELLITE INTELLIGENCE', icon: Satellite, path: '/', exact: false },
-    { label: 'RISK MATRIX', icon: Activity, path: '/risk' },
-    { label: 'CLAIM LOGS', icon: FileText, path: '/claims' },
-    { label: 'SETTINGS', icon: Settings, path: '/settings' },
+    { label: 'Risk Matrix', icon: Activity, path: '/risk' },
+    { label: 'Map Visualization', icon: Map, path: '/map' },
+    { label: 'Claim Logs', icon: FileText, path: '/logs' },
+    { label: 'Settings', icon: Settings, path: '/settings' },
   ]
   
   return (

@@ -51,5 +51,66 @@ export const api = {
    */
   getStats: async () => {
     return fetchApi('/api/v1/farms/stats/intelligence');
+  },
+
+  /**
+   * Get risk matrix aggregation data
+   */
+  getRiskData: async () => {
+    return fetchApi('/api/v1/risk');
+  },
+
+  /**
+   * Get system activity and error logs
+   */
+  getSystemLogs: async () => {
+    return fetchApi('/api/v1/activity');
+  },
+
+  /**
+   * Get regional weather forecast data
+   */
+  getWeatherData: async () => {
+    return fetchApi('/api/v1/weather');
+  },
+
+  /**
+   * Get Map coordinates
+   */
+  getMapData: async () => {
+    return fetchApi('/api/v1/map');
+  },
+
+  /**
+   * Get all submitted claims
+   */
+  getClaims: async () => {
+    return fetchApi('/api/claims');
+  },
+
+  /**
+   * Update status of a specific claim
+   */
+  updateClaimStatus: async (id, status) => {
+    try {
+      const response = await fetch(`/api/claim/${id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status })
+      });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.message || `API Error: ${response.status}`);
+      return data.data;
+    } catch (error) {
+      console.error(`[API Error] PATCH /api/claim/${id}:`, error);
+      throw error;
+    }
+  },
+
+  /**
+   * Get detailed intelligence report for a farm
+   */
+  getFarmReport: async (id) => {
+    return fetchApi(`/api/v1/report/${id}`);
   }
 };

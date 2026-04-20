@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react'
 import { Card } from '../components/ui/Card'
 import { Badge } from '../components/ui/Badge'
 import { Search, Filter, BarChart3, Loader2, AlertTriangle } from 'lucide-react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useLocation } from 'react-router-dom'
 import { api } from '../services/api'
 
 // Status badge helper
@@ -23,6 +23,9 @@ export default function Farms() {
   const [error, setError] = useState(null);
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState('');
+  const location = useLocation();
+  const queryParams = new URLSearchParams(location.search);
+  const statusFilter = queryParams.get('status');
 
   useEffect(() => {
     async function loadFarms() {
@@ -42,6 +45,13 @@ export default function Farms() {
             f.farmerName.toLowerCase().includes(search.toLowerCase())
           );
         }
+        if (statusFilter === 'approved') {
+          // LOW fraud score usually means approved
+          finalFarms = finalFarms.filter(f => f.summary.fraudStatus === 'LOW');
+        } else if (statusFilter === 'flagged') {
+          // MEDIUM, HIGH, CRITICAL means flagged
+          finalFarms = finalFarms.filter(f => f.summary.fraudStatus !== 'LOW');
+        }
 
         setFarms(finalFarms);
         setMeta(farmsRes.meta || { currentPage: 1, totalPages: 1, totalRecords: 0 });
@@ -58,7 +68,7 @@ export default function Farms() {
       loadFarms();
     }, 300);
     return () => clearTimeout(timer);
-  }, [page, search]);
+  }, [page, search, statusFilter]);
 
   if (error) {
     return (
@@ -137,7 +147,7 @@ export default function Farms() {
                 return (
                 <tr 
                   key={farm.farmId} 
-                  onClick={() => navigate(`/farms/${farm.farmId}`)}
+                  onClick={() => navigate(`/farm/${farm.farmId}`)}
                   className="hover:bg-slate-50/50 transition-colors group cursor-pointer"
                 >
                   <td className="py-4 px-6 text-sm font-semibold text-blue-600">{farm.farmId}</td>

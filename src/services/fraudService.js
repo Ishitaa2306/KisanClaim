@@ -25,17 +25,16 @@ const { calculateDamage } = require('../utils/ndviAnalyzer');
 // ── Configuration ─────────────────────────────────────────────
 
 const CHECK_WEIGHTS = {
-  neighborAnomaly:    0.30,
-  statisticalOutlier: 0.25,
-  logicalConsistency: 0.25,
-  temporalPattern:    0.10,
-  claimValueRatio:    0.10,
+  neighborAnomaly:    0.35,
+  logicalConsistency: 0.35,
+  temporalPattern:    0.15,
+  statisticalOutlier: 0.10,
+  claimValueRatio:    0.05,
 };
 
 const FRAUD_THRESHOLDS = {
-  low:    30,
-  medium: 55,
-  high:   75,
+  low:    30.0,
+  medium: 60.0,
 };
 
 // Haversine distance in km
@@ -364,16 +363,13 @@ function checkClaimValueRatio(farm, claimAmount) {
  * @returns {{ status: string, flag: boolean, riskLevel: string }}
  */
 function classifyFraud(score) {
-  if (score < FRAUD_THRESHOLDS.low) {
+  if (score <= FRAUD_THRESHOLDS.low) {
     return { status: 'LOW', flag: false, riskLevel: 'CLEAR' };
   }
-  if (score < FRAUD_THRESHOLDS.medium) {
-    return { status: 'MEDIUM', flag: false, riskLevel: 'REVIEW' };
+  if (score <= FRAUD_THRESHOLDS.medium) {
+    return { status: 'MEDIUM', flag: true, riskLevel: 'REVIEW' };
   }
-  if (score < FRAUD_THRESHOLDS.high) {
-    return { status: 'HIGH', flag: true, riskLevel: 'INVESTIGATE' };
-  }
-  return { status: 'CRITICAL', flag: true, riskLevel: 'BLOCK' };
+  return { status: 'HIGH', flag: true, riskLevel: 'INVESTIGATE' };
 }
 
 /**
