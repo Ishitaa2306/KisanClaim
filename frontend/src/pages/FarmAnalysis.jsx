@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { Card } from '../components/ui/Card'
 import { Badge } from '../components/ui/Badge'
-import { MapPin, TrendingUp, ShieldCheck, Tractor, Bot, Loader2, AlertTriangle, FileText, Activity } from 'lucide-react'
+import { MapPin, TrendingUp, ShieldCheck, Tractor, Bot, Loader2, AlertTriangle, FileText, Activity, Thermometer, CloudRain, Droplets, Calendar, Zap, AlertCircle, Camera, Clock, Smartphone } from 'lucide-react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { LineChart, Line, XAxis, Tooltip, ResponsiveContainer, CartesianGrid, AreaChart, Area, YAxis } from 'recharts'
 import { api } from '../services/api'
@@ -19,7 +19,11 @@ export default function FarmAnalysis() {
   const { id } = useParams();
   const navigate = useNavigate();
   const [farm, setFarm] = useState(null);
+  const [analysis, setAnalysis] = useState(null);
+  const [groundImages, setGroundImages] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [analysisLoading, setAnalysisLoading] = useState(true);
+  const [imagesLoading, setImagesLoading] = useState(true);
   const [error, setError] = useState(null);
   const [beforeLoadError, setBeforeLoadError] = useState(false);
   const [afterLoadError, setAfterLoadError] = useState(false);
@@ -36,7 +40,36 @@ export default function FarmAnalysis() {
         setLoading(false);
       }
     }
-    if (id) loadFarm();
+    
+    async function loadAnalysis() {
+      try {
+        setAnalysisLoading(true);
+        const data = await api.getFarmAnalysis(id);
+        setAnalysis(data);
+      } catch (err) {
+        console.error("Failed to fetch intelligence analysis:", err);
+      } finally {
+        setAnalysisLoading(false);
+      }
+    }
+
+    async function loadGroundEvidence() {
+      try {
+        setImagesLoading(true);
+        const data = await api.getFarmImages(id);
+        setGroundImages(data || []);
+      } catch (err) {
+        console.error("Failed to fetch ground evidence:", err);
+      } finally {
+        setImagesLoading(false);
+      }
+    }
+
+    if (id) {
+      loadFarm();
+      loadAnalysis();
+      loadGroundEvidence();
+    }
   }, [id]);
 
   if (loading) {
@@ -52,7 +85,7 @@ export default function FarmAnalysis() {
       <Card className="p-8 text-center max-w-lg mx-auto mt-20 border-red-100 bg-red-50">
         <AlertTriangle className="w-10 h-10 text-red-500 mx-auto mb-4" />
         <h3 className="text-lg font-bold text-red-700">Failed to load Intelligence Report</h3>
-        <p className="text-red-600 mt-2 text-sm">{error || 'Farm not found'}</p>
+        <p className="text-red-600 mt-2 text-sm">{typeof error === 'string' ? error : (error?.message || 'Farm not found')}</p>
         <button onClick={() => navigate('/farms')} className="mt-6 font-bold text-sm bg-white text-slate-800 px-4 py-2 rounded shadow-sm">
           Return to Inventory
         </button>
@@ -60,8 +93,23 @@ export default function FarmAnalysis() {
     );
   }
 
-  const { farmerName, location, cropType, insuredAmount, summary, ndviBefore, ndviAfter } = farm;
-  const { damagePercentage, claimAmount, fraudStatus, fraudScore, flagged } = summary;
+  const { 
+    farmerName = 'Unknown Farmer', 
+    location = { state: 'N/A', district: 'N/A' }, 
+    cropType = 'Unknown', 
+    insuredAmount = 0, 
+    summary = {}, 
+    ndviBefore = 0.5, 
+    ndviAfter = 0.4 
+  } = farm || {};
+
+  const { 
+    damagePercentage = 0, 
+    claimAmount = 0, 
+    fraudStatus = 'LOW', 
+    fraudScore = 0, 
+    flagged = false 
+  } = summary;
 
   const isHighRisk = fraudStatus === 'CRITICAL' || fraudStatus === 'HIGH';
 
@@ -81,7 +129,7 @@ export default function FarmAnalysis() {
     'https://images.unsplash.com/photo-1547483238-f400e65ccd56?w=800&q=80'
   ];
   
-  const farmNumber = parseInt(farm.farmId.split('-')[1] || '0', 10);
+  const farmNumber = parseInt((farm?.farmId || 'KCF-0').split('-')[1] || '0', 10);
   const strictBeforeImg = VERIFIED_BEFORE_IMAGES[farmNumber % VERIFIED_BEFORE_IMAGES.length];
   const strictAfterImg = VERIFIED_AFTER_IMAGES[farmNumber % VERIFIED_AFTER_IMAGES.length];
 
@@ -104,12 +152,12 @@ export default function FarmAnalysis() {
           <div className="flex items-center gap-2 mb-2 text-[10px] font-bold text-slate-500 uppercase tracking-widest">
             <span>ANALYSIS CASE</span>
             <span>/</span>
-            <span className="text-blue-600">#{farm.farmId}</span>
+            <span className="text-blue-600">#{farm?.farmId || id}</span>
           </div>
           <h1 className="text-4xl font-extrabold text-slate-900 tracking-tight">Farm Intelligence Report</h1>
         </div>
         <div className="flex flex-wrap gap-3">
-          <button onClick={() => navigate(`/report/${farm.farmId}`)} className="px-6 py-2.5 rounded-full bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold text-sm transition-colors flex items-center gap-2"><FileText className="w-4 h-4"/> View Report</button>
+          <button onClick={() => navigate(`/report/${farm?.farmId || id}`)} className="px-6 py-2.5 rounded-full bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold text-sm transition-colors flex items-center gap-2"><FileText className="w-4 h-4"/> View Report</button>
           <button className="px-6 py-2.5 rounded-full bg-[#005c8a] hover:bg-[#004b70] text-white font-bold text-sm shadow-md transition-colors">Share Data</button>
         </div>
       </div>
@@ -201,6 +249,102 @@ export default function FarmAnalysis() {
                </p>
              </Card>
           </div>
+
+           {/* ── WEATHER & RISK INTELLIGENCE SECTION ──────────────────────── */}
+           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+             {/* Regional Weather Insights */}
+             <Card className="p-6 border-l-4 border-l-blue-400 bg-gradient-to-br from-white to-blue-50/30">
+               <div className="flex items-center justify-between mb-6">
+                 <div className="flex items-center gap-2">
+                   <CloudRain className="w-5 h-5 text-blue-500" />
+                   <h3 className="text-sm font-bold text-slate-800 uppercase tracking-wider">Regional Weather Insights</h3>
+                 </div>
+                 {analysisLoading && <Loader2 className="w-4 h-4 animate-spin text-slate-400" />}
+               </div>
+
+               {analysis ? (
+                 <div className="grid grid-cols-3 gap-4">
+                   <div className="text-center p-3 bg-white rounded-xl border border-blue-100 shadow-sm">
+                     <Thermometer className="w-5 h-5 text-orange-500 mx-auto mb-2" />
+                     <p className="text-lg font-black text-slate-800">{analysis.weather?.temperature ?? farm.weather?.temperature}°C</p>
+                     <p className="text-[8px] font-bold text-slate-400 uppercase tracking-widest">TEMP</p>
+                   </div>
+                   <div className="text-center p-3 bg-white rounded-xl border border-blue-100 shadow-sm">
+                     <CloudRain className="w-5 h-5 text-blue-500 mx-auto mb-2" />
+                     <p className="text-lg font-black text-slate-800">{analysis.weather?.rainfall ?? farm.weather?.rainfall}mm</p>
+                     <p className="text-[8px] font-bold text-slate-400 uppercase tracking-widest">RAIN</p>
+                   </div>
+                   <div className="text-center p-3 bg-white rounded-xl border border-blue-100 shadow-sm">
+                     <Droplets className="w-5 h-5 text-cyan-500 mx-auto mb-2" />
+                     <p className="text-lg font-black text-slate-800">{analysis.weather?.humidity ?? farm.weather?.humidity}%</p>
+                     <p className="text-[8px] font-bold text-slate-400 uppercase tracking-widest">HUMIDITY</p>
+                   </div>
+                 </div>
+               ) : (
+                 <div className="flex items-center justify-center h-24 text-slate-400 text-xs italic">
+                   Loading live weather data...
+                 </div>
+               )}
+             </Card>
+
+             {/* Crop Risk Intelligence */}
+             <Card className={`p-6 border-l-4 ${!analysis ? 'border-l-slate-200' : (analysis.weather?.severity === 'Critical' || analysis.weather?.severity === 'High') ? 'border-l-red-500 bg-red-50/30' : analysis.weather?.severity === 'Medium' ? 'border-l-orange-400 bg-orange-50/30' : 'border-l-green-500 bg-green-50/30'}`}>
+               <div className="flex items-center justify-between mb-4">
+                 <div className="flex items-center gap-2">
+                   <Zap className="w-5 h-5 text-amber-500" />
+                   <h3 className="text-sm font-bold text-slate-800 uppercase tracking-wider">Intelligence Layer: Crop Risk</h3>
+                 </div>
+                 {analysis && (
+                   <Badge className={`font-black tracking-widest px-2 py-0.5 text-[9px] uppercase ${analysis.weather?.severity === 'Critical' || analysis.weather?.severity === 'High' ? 'bg-red-100 text-red-700' : analysis.weather?.severity === 'Medium' ? 'bg-orange-100 text-orange-700' : 'bg-green-100 text-green-700'}`}>
+                     {analysis.weather?.severity || 'LOW'} RISK
+                   </Badge>
+                 )}
+               </div>
+
+               {analysis ? (
+                 <div className="space-y-4">
+                   <div className="flex items-center gap-3">
+                     <div className={`p-2 rounded-lg ${analysis.weather?.severity === 'Critical' || analysis.weather?.severity === 'High' ? 'bg-red-100 text-red-600' : 'bg-slate-100 text-slate-600'}`}>
+                       <AlertCircle className="w-5 h-5" />
+                     </div>
+                     <div>
+                       <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">EVENT DETECTED</p>
+                       <p className="text-sm font-black text-slate-800 uppercase tracking-tight">
+                         {analysis.weather?.eventType || "No Significant Risk Detected"}
+                       </p>
+                     </div>
+                   </div>
+
+                   <div className="grid grid-cols-2 gap-4 pt-2 border-t border-slate-200/50">
+                     <div>
+                        <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mb-1 flex items-center gap-1">
+                          <Calendar className="w-3 h-3" /> Satellite Window
+                        </p>
+                        <div className="flex flex-col gap-1">
+                          <div className="flex justify-between items-center bg-white/60 p-1.5 rounded-md border border-slate-100">
+                             <span className="text-[8px] font-bold text-slate-500">BEFORE</span>
+                             <span className="text-[10px] font-mono font-bold text-slate-700">{analysis.analysisWindow?.beforeDate}</span>
+                          </div>
+                          <div className="flex justify-between items-center bg-white/60 p-1.5 rounded-md border border-slate-100">
+                             <span className="text-[8px] font-bold text-slate-500">AFTER</span>
+                             <span className="text-[10px] font-mono font-bold text-slate-700">{analysis.analysisWindow?.afterDate}</span>
+                          </div>
+                        </div>
+                     </div>
+                     <div className="flex flex-col justify-end">
+                       <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mb-1">DETECTION DATE</p>
+                       <p className="text-xs font-bold text-slate-800">{analysis.weather?.eventDate}</p>
+                     </div>
+                   </div>
+                 </div>
+               ) : (
+                 <div className="flex flex-col items-center justify-center h-24 text-slate-400 text-xs italic">
+                    <Activity className="w-5 h-5 animate-pulse mb-2" />
+                    Analyzing agricultural risk patterns...
+                 </div>
+               )}
+             </Card>
+           </div>
 
           {/* Spectral Variance Chart Area */}
           <Card className="p-8">
@@ -376,6 +520,78 @@ export default function FarmAnalysis() {
             </Card>
           </div>
         </div>
+      </div>
+
+      {/* Ground Evidence (Farmer Uploads) */}
+      <div className="mt-8 mb-10">
+        <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-lg bg-green-100 flex items-center justify-center">
+              <Camera size={20} className="text-green-600" />
+            </div>
+            <div>
+              <h2 className="text-xl font-bold text-gray-900 leading-tight">Ground Evidence</h2>
+              <p className="text-sm text-gray-500">Physical verification images uploaded by the farmer</p>
+            </div>
+          </div>
+          {groundImages.length > 0 && (
+            <span className="px-3 py-1 bg-green-50 text-green-700 text-xs font-bold rounded-full uppercase tracking-wider border border-green-100">
+              {groundImages.length} Evidence Records
+            </span>
+          )}
+        </div>
+
+        {imagesLoading ? (
+           <div className="bg-white rounded-xl border border-gray-200 p-12 flex flex-col items-center justify-center text-center">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-600 mb-4"></div>
+              <p className="text-sm text-gray-500">Fetching latest ground evidence...</p>
+           </div>
+        ) : groundImages.length > 0 ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            {groundImages.map((img, idx) => (
+              <div key={idx} className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden group hover:border-green-500 hover:shadow-md transition-all">
+                <div className="relative aspect-[4/3] overflow-hidden bg-slate-100">
+                  <img 
+                    src={img.imageUrl} 
+                    alt={`Ground Evidence ${idx}`} 
+                    className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" 
+                  />
+                  <div className="absolute top-2 right-2">
+                    <span className="px-2 py-1 bg-black/60 backdrop-blur-sm text-white text-[10px] font-bold rounded uppercase tracking-wider border border-white/20">
+                      {img.type || 'Evidence'}
+                    </span>
+                  </div>
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex flex-col justify-end p-3">
+                    <button className="bg-white/90 backdrop-blur-sm text-gray-900 text-xs font-bold py-2 rounded-lg hover:bg-white transition-colors">
+                      View Full Resolution
+                    </button>
+                  </div>
+                </div>
+                <div className="p-4 bg-white">
+                  <p className="text-sm text-gray-900 font-medium line-clamp-2 mb-3 h-10">{img.description || 'Verified ground-level evidence of crop condition.'}</p>
+                  <div className="flex items-center justify-between pt-3 border-t border-gray-100">
+                    <div className="flex items-center gap-1.5 text-gray-500">
+                      <Clock size={12} />
+                      <span className="text-[10px] font-bold uppercase tracking-wider">{new Date(img.uploadedAt).toLocaleDateString()}</span>
+                    </div>
+                    <div className="flex items-center gap-1.5 text-green-600">
+                      <Smartphone size={12} />
+                      <span className="text-[10px] font-bold uppercase tracking-wider">Mobile App</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="bg-white rounded-xl border border-dashed border-gray-300 p-16 flex flex-col items-center justify-center text-center">
+            <div className="w-16 h-16 rounded-full bg-gray-50 flex items-center justify-center mb-4">
+              <Camera size={32} className="text-gray-300" />
+            </div>
+            <h3 className="text-lg font-bold text-gray-900 mb-1">No Ground Evidence Yet</h3>
+            <p className="text-sm text-gray-500 max-w-xs">Ground evidence uploaded by the farmer from the mobile app will appear here for verification.</p>
+          </div>
+        )}
       </div>
 
       {/* Bottom Grid */}

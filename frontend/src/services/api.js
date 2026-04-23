@@ -119,5 +119,19 @@ export const api = {
    */
   getFarmReport: async (id) => {
     return fetchApi(`/api/v1/report/${id}`);
+  },
+
+  /**
+   * Get intelligent risk analysis for a specific farm (Weather Intelligence Engine)
+   */
+  getFarmAnalysis: async (id) => {
+    return fetchApi(`/api/farm/${id}/analysis`);
+  },
+
+  /**
+   * Get ground evidence images uploaded for a farm
+   */
+  getFarmImages: async (id) => {
+    return fetchApi(`/api/farm/${id}/images`);
   }
 };

@@ -23,6 +23,23 @@ const { Router } = require('express');
 const appStore = require('../models/Store');
 const farmStore = require('../models/Farm');
 const ApiResponse = require('../utils/ApiResponse');
+const analysisController = require('../controllers/analysisController');
+const uploadController = require('../controllers/uploadController');
+const multer = require('multer');
+const path = require('path');
+
+// Multer Config for Temporary Storage
+const upload = multer({ 
+  dest: 'temp_uploads/',
+  limits: { fileSize: 5 * 1024 * 1024 }, // 5MB limit
+  fileFilter: (req, file, cb) => {
+    const filetypes = /jpeg|jpg|png/;
+    const extname = filetypes.test(path.extname(file.originalname).toLowerCase());
+    const mimetype = filetypes.test(file.mimetype);
+    if (mimetype && extname) return cb(null, true);
+    cb(new Error('Only images (jpg/png) are allowed'));
+  }
+});
 
 const router = Router();
 
@@ -104,6 +121,19 @@ router.get('/farm/:id', async (req, res) => {
     new ApiResponse(500, 'Internal server error').send(res);
   }
 });
+
+// ═══════════════════════════════════════════════════════════════
+//  FARM WEATHER INTELLIGENCE ANALYSIS
+// ═══════════════════════════════════════════════════════════════
+
+router.get('/farm/:id/analysis', analysisController.getFarmAnalysis);
+
+// ═══════════════════════════════════════════════════════════════
+//  EVIDENCE UPLOAD
+// ═══════════════════════════════════════════════════════════════
+
+router.post('/upload/evidence', upload.single('image'), uploadController.uploadEvidence);
+router.get('/farm/:id/images', uploadController.getFarmImages);
 
 // ═══════════════════════════════════════════════════════════════
 //  FARMS LIST (for dashboard consumption)

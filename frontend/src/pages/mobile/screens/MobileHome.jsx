@@ -137,7 +137,8 @@ const MobileHome = () => {
 
         <button onClick={() => {
           const weatherLoc = primaryFarm?.location?.district || primaryFarm?.location?.state || 'Pune';
-          navigate(`/mobile/weather/${weatherLoc}`);
+          const farmId = primaryFarm?.farmId;
+          navigate(`/mobile/weather/${weatherLoc}${farmId ? `?farmId=${farmId}` : ''}`);
         }} className="bg-white p-4 rounded-lg flex items-center gap-4 shadow-sm border border-gray-200 hover:border-green-500 hover:shadow transition-all group text-left">
           <div className="p-3 bg-green-50 rounded-lg group-hover:bg-green-100 transition-colors">
             <CloudRain className="text-green-600" size={20} />

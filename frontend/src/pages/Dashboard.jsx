@@ -395,9 +395,17 @@ export default function Dashboard() {
                           {claim.ndviAnalysis?.ndviDrop?.toFixed(1)}% LOSS
                         </span>
                         {claim.status === 'Pending' ? (
-                          <div className="flex gap-2 mt-2">
-                            <button onClick={(e) => handleClaimStatusUpdate(e, claim.claimId, 'Approved')} className="text-[9px] bg-green-50 text-green-600 hover:bg-green-100 font-bold px-2 py-1 rounded">APPROVE</button>
-                            <button onClick={(e) => handleClaimStatusUpdate(e, claim.claimId, 'Rejected')} className="text-[9px] bg-red-50 text-red-600 hover:bg-red-100 font-bold px-2 py-1 rounded">REJECT</button>
+                          <div className="flex flex-col gap-2 mt-2">
+                            <div className="flex items-center gap-1.5">
+                              <span className="text-[8px] font-bold text-slate-400 uppercase tracking-tighter">AI SUGGESTS:</span>
+                              <Badge variant={claim.explanation?.decision === 'Approved' ? 'success' : claim.explanation?.decision === 'Rejected' ? 'danger' : 'warning'} className="text-[8px] px-1.5 py-0 font-bold uppercase">
+                                {claim.explanation?.decision || 'Review'}
+                              </Badge>
+                            </div>
+                            <div className="flex gap-2">
+                              <button onClick={(e) => handleClaimStatusUpdate(e, claim.claimId, 'Approved')} className="text-[9px] bg-green-50 text-green-600 hover:bg-green-100 font-bold px-2 py-1 rounded">APPROVE</button>
+                              <button onClick={(e) => handleClaimStatusUpdate(e, claim.claimId, 'Rejected')} className="text-[9px] bg-red-50 text-red-600 hover:bg-red-100 font-bold px-2 py-1 rounded">REJECT</button>
+                            </div>
                           </div>
                         ) : (
                           <span className="text-[9px] text-slate-400 font-medium">Verified by Satellite</span>

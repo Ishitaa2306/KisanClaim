@@ -11,6 +11,8 @@ const MobileClaim = () => {
   const [description, setDescription] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [errorVisible, setErrorVisible] = useState(null);
+  const [selectedFile, setSelectedFile] = useState(null);
+  const [previewUrl, setPreviewUrl] = useState(null);
 
   useEffect(() => {
     const fetchFarmer = async () => {
@@ -21,8 +23,16 @@ const MobileClaim = () => {
     fetchFarmer();
   }, [farmerId]);
 
+  const handleFileChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      setSelectedFile(file);
+      setPreviewUrl(URL.createObjectURL(file));
+    }
+  };
+
   const handleImageUpload = () => {
-    alert('This is a demo. We are mocking the image upload feature.');
+    document.getElementById('evidence-upload').click();
   };
 
   const handleSubmit = async (e) => {
@@ -32,12 +42,34 @@ const MobileClaim = () => {
 
     setSubmitting(true);
     try {
+      let imageUrls = ["https://images.unsplash.com/photo-1583245553131-0e7d36409271"]; // Default fallback
+      const farmId = data?.linkedFarmIds?.[0] || 'NEW-REG';
+
+      // 1. Upload the image if selected
+      if (selectedFile) {
+        const formData = new FormData();
+        formData.append('image', selectedFile);
+        formData.append('farmId', farmId);
+        formData.append('description', description);
+        formData.append('type', 'ground-evidence');
+
+        const uploadRes = await fetch('/api/upload/evidence', {
+          method: 'POST',
+          body: formData
+        });
+        const uploadJson = await uploadRes.json();
+        
+        if (!uploadRes.ok) throw new Error(uploadJson.message || 'Image upload failed');
+        imageUrls = [uploadJson.data.imageUrl];
+      }
+
+      // 2. Submit the claim
       const payload = {
         farmerId,
-        farmId: data?.linkedFarmIds?.[0] || 'NEW-REG',
+        farmId,
         damageType,
         description,
-        images: ["https://images.unsplash.com/photo-1583245553131-0e7d36409271"]
+        images: imageUrls
       };
 
       const res = await fetch('/api/v1/mobile/claim', {
@@ -100,16 +132,34 @@ const MobileClaim = () => {
 
           <div>
             <label className="block text-sm font-semibold text-gray-800 mb-2">{t('upload_images')}</label>
+            <input 
+              type="file" 
+              id="evidence-upload" 
+              className="hidden" 
+              accept="image/*"
+              onChange={handleFileChange}
+            />
             <button 
               type="button"
               onClick={handleImageUpload}
-              className="w-full bg-gray-50 border-2 border-dashed border-gray-300 rounded-lg p-6 flex flex-col items-center justify-center hover:bg-gray-100 hover:border-gray-400 transition-colors group"
+              className={`w-full ${previewUrl ? 'bg-green-50 border-green-200' : 'bg-gray-50 border-gray-300'} border-2 border-dashed rounded-lg p-6 flex flex-col items-center justify-center hover:bg-gray-100 hover:border-gray-400 transition-colors group relative overflow-hidden`}
             >
-              <div className="p-3 bg-white rounded-full shadow-sm mb-3 group-hover:scale-105 transition-transform">
-                <ImagePlus className="text-gray-500" size={24} />
-              </div>
-              <span className="text-sm text-gray-600 font-medium">Click to upload satellite or field imagery</span>
-              <span className="text-xs text-gray-400 mt-1">PNG, JPG, up to 10MB</span>
+              {previewUrl ? (
+                <div className="flex flex-col items-center">
+                  <div className="w-24 h-24 rounded-lg overflow-hidden mb-2 border border-green-200">
+                    <img src={previewUrl} alt="Preview" className="w-full h-full object-cover" />
+                  </div>
+                  <span className="text-xs font-bold text-green-700 uppercase tracking-wider">Image Selected ✓</span>
+                </div>
+              ) : (
+                <>
+                  <div className="p-3 bg-white rounded-full shadow-sm mb-3 group-hover:scale-105 transition-transform">
+                    <ImagePlus className="text-gray-500" size={24} />
+                  </div>
+                  <span className="text-sm text-gray-600 font-medium">Click to upload satellite or field imagery</span>
+                  <span className="text-xs text-gray-400 mt-1">PNG, JPG, up to 10MB</span>
+                </>
+              )}
             </button>
           </div>
 

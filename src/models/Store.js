@@ -23,6 +23,7 @@ const appStore = {
     if (!db.notifications) db.notifications = [];
     if (!db.activities) db.activities = [];
     if (!db.weather) db.weather = [];
+    if (!db.images) db.images = [];
 
     if (db.farmers.length > 0) {
       console.log(`  ✔  AppStore: ${db.farmers.length} farmers, ${db.claims.length} claims already in JSON DB`);
@@ -213,7 +214,7 @@ const appStore = {
     const claimData = {
       claimId, farmerId, farmerName: farmer?.name || 'Unknown Farmer',
       farmId: farmId || 'NEW-REG', damageType, description, images: images || [],
-      status: initialStatus,
+      status: 'Pending', // New claims always start as Pending to allow manual Approve/Reject option
       claimAmount,
       ndviAnalysis: { ndviBefore, ndviAfter, ndviDrop, damageLevel },
       fraudAnalysis: { fraudScore, fraudRisk, flags: farm?.alerts || (fraudScore > 40 ? ['Dynamic Registration Anomaly'] : []) },
@@ -453,6 +454,21 @@ const appStore = {
       createdAt: c.createdAt, processedAt: c.processedAt || null,
     }));
   },
+  async getImagesByFarmId(farmId) {
+    const db = await dbManager.getData();
+    if (!db.images) return [];
+    return db.images
+      .filter(img => img.farmId === farmId)
+      .sort((a, b) => new Date(b.uploadedAt) - new Date(a.uploadedAt));
+  },
+
+  async saveFarmImage(imageData) {
+    const db = await dbManager.getData();
+    if (!db.images) db.images = [];
+    db.images.push(imageData);
+    await dbManager.saveData();
+    return imageData;
+  }
 };
 
 module.exports = appStore;
