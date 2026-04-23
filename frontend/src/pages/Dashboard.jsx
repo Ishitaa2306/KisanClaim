@@ -187,10 +187,10 @@ export default function Dashboard() {
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
         <StatCard icon={Tractor} iconColor="text-primary" label="Total Farms" value={stats.totalFarms} onClick={() => navigate('/farms')} />
         <StatCard icon={FileText} iconColor="text-blue-600" label="Total Claims" value={totalClaimsCount > 0 ? totalClaimsCount : stats.totalFarms} onClick={() => navigate('/claims')} />
-        <StatCard icon={CheckCircle} iconColor="text-primary" label="Approved" value={approvedCount} onClick={() => navigate('/farms?status=approved')} />
-        <StatCard icon={AlertTriangle} iconColor="text-danger" label="Flagged" value={flaggedCount} onClick={() => navigate('/farms?status=flagged')} />
-        <StatCard icon={Banknote} iconColor="text-primary" label="Total Payout" value={formatCurrency(stats.totalClaimAmount)} onClick={() => navigate('/claims')} />
-        <StatCard icon={BarChart2} iconColor="text-purple-600" label="Avg Damage" value={`${stats.damage.average.toFixed(1)}%`} onClick={() => navigate('/farms')} />
+        <StatCard icon={CheckCircle} iconColor="text-primary" label="Approved" value={approvedCount} onClick={() => navigate('/claims?status=Approved')} />
+        <StatCard icon={AlertTriangle} iconColor="text-danger" label="Flagged" value={flaggedCount} onClick={() => navigate('/claims?status=Flagged')} />
+        <StatCard icon={Banknote} iconColor="text-primary" label="Total Payout" value={formatCurrency(stats.totalClaimAmount)} onClick={() => navigate('/analytics/financial')} />
+        <StatCard icon={BarChart2} iconColor="text-purple-600" label="Avg Damage" value={`${stats.damage.average.toFixed(1)}%`} onClick={() => navigate('/analytics/damage')} />
       </div>
 
       {/* Charts Row */}

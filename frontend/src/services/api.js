@@ -56,8 +56,8 @@ export const api = {
   /**
    * Get risk matrix aggregation data
    */
-  getRiskData: async () => {
-    return fetchApi('/api/v1/risk');
+  getRiskData: async (level) => {
+    return fetchApi(level ? `/api/v1/risk?level=${level}` : '/api/v1/risk');
   },
 
   /**

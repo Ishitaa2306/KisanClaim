@@ -14646,6 +14646,78 @@
       "claimIds": [
         "CLM-00026"
       ]
+    },
+    {
+      "farmId": "KCF-2419",
+      "farmerName": "Ishita Dharmawat",
+      "cropType": "Rice",
+      "season": "Kharif",
+      "location": {
+        "state": "Gujarat",
+        "district": "Surat",
+        "latitude": 20.8215,
+        "longitude": 84.1129
+      },
+      "areaAcres": 2.8,
+      "insuredAmount": 61599,
+      "policyId": "POL-3721F00B",
+      "enrolledAt": "2026-04-23T19:05:20.573Z",
+      "ndviBefore": 0.88,
+      "ndviAfter": 0.29,
+      "ndviDrop": 67,
+      "riskScore": 31,
+      "riskLevel": "medium",
+      "severity": "severe",
+      "alerts": [],
+      "activityLogs": [
+        {
+          "id": "d1c43535-f696-4c2c-b0a0-5e91e1ea92d3",
+          "action": "Farm Registered",
+          "timestamp": "2026-04-23T19:05:20.573Z"
+        },
+        {
+          "id": "2682bfe2-1054-40ba-a0ff-255e0210a2ee",
+          "action": "Data Synced",
+          "timestamp": "2026-04-23T19:05:20.573Z"
+        }
+      ],
+      "weather": {
+        "temperature": 40,
+        "humidity": 63,
+        "condition": "Heavy Rain"
+      },
+      "beforeImage": "https://images.unsplash.com/photo-1501004318641-b39e6451bec6",
+      "afterImage": "https://images.unsplash.com/photo-1583245553131-0e7d36409271",
+      "analytics": {
+        "ndviHistory": [
+          0.93,
+          0.9,
+          0.87,
+          0.33,
+          0.29
+        ],
+        "damageTrend": [
+          27,
+          47,
+          57,
+          67,
+          69
+        ],
+        "riskScore": 31,
+        "region": "Gujarat/Surat"
+      },
+      "explanation": {
+        "ndviDrop": 67,
+        "damageLevel": "severe",
+        "fraudRisk": "medium",
+        "reason": "Claim verified. NDVI drop and field data match reported damage.",
+        "decision": "Approved"
+      },
+      "explanation.decision": "Approved",
+      "explanation.reason": "Claim verified. NDVI drop and field data match reported damage.",
+      "claimIds": [
+        "CLM-00027"
+      ]
     }
   ],
   "farmers": [
@@ -16859,6 +16931,17 @@
       ],
       "address": "Pune, Maharashtra",
       "registeredAt": "2026-04-23T12:02:47.948Z"
+    },
+    {
+      "farmerId": "FMR-6E1EF639",
+      "name": "Ishita Dharmawat",
+      "phone": "9462083569",
+      "aadhaar": "XXXX-XXXX-6703",
+      "linkedFarmIds": [
+        "KCF-2419"
+      ],
+      "address": "Surat, Gujarat",
+      "registeredAt": "2026-04-23T19:05:20.573Z"
     }
   ],
   "claims": [
@@ -18242,6 +18325,57 @@
       ],
       "createdAt": "2026-04-23T14:26:59.806Z",
       "updatedAt": "2026-04-23T14:26:59.806Z"
+    },
+    {
+      "claimId": "CLM-00027",
+      "farmerId": "FMR-6E1EF639",
+      "farmerName": "Ishita Dharmawat",
+      "farmId": "KCF-2419",
+      "damageType": "flood",
+      "description": "flood damage reported for Rice",
+      "images": [
+        "https://images.unsplash.com/photo-1583245553131-0e7d36409271"
+      ],
+      "status": "Pending",
+      "claimAmount": 35081,
+      "ndviAnalysis": {
+        "ndviBefore": 0.88,
+        "ndviAfter": 0.29,
+        "ndviDrop": 67,
+        "damageLevel": "severe"
+      },
+      "fraudAnalysis": {
+        "fraudScore": 31,
+        "fraudRisk": "medium",
+        "flags": []
+      },
+      "explanation": {
+        "ndviDrop": 67,
+        "damageLevel": "severe",
+        "fraudScore": 31,
+        "fraudRisk": "medium",
+        "reason": "Claim verified. NDVI drop and field data match reported damage.",
+        "decision": "Approved"
+      },
+      "timeline": [
+        {
+          "action": "Claim Submitted",
+          "timestamp": "2026-04-23T19:05:54.096Z",
+          "detail": "Damage type: flood"
+        },
+        {
+          "action": "Identity Verified",
+          "timestamp": "2026-04-23T19:05:54.096Z",
+          "detail": "Farmer: Ishita Dharmawat"
+        },
+        {
+          "action": "Automated NDVI Check",
+          "timestamp": "2026-04-23T19:05:54.096Z",
+          "detail": "Estimated Drop: 67%"
+        }
+      ],
+      "createdAt": "2026-04-23T19:05:54.096Z",
+      "updatedAt": "2026-04-23T19:05:54.096Z"
     }
   ],
   "notifications": [
@@ -20060,6 +20194,22 @@
       "message": "Your claim CLM-00026 has been submitted. Estimated amount: ₹175,819.",
       "read": false,
       "timestamp": "2026-04-23T14:26:59.885Z"
+    },
+    {
+      "notificationId": "a4f90841-7b9a-4661-803b-d33521e78e1b",
+      "farmerId": "FMR-6E1EF639",
+      "type": "info",
+      "message": "Welcome to KisanClaim, Ishita Dharmawat. Your farm KCF-2419 is now enrolled.",
+      "read": false,
+      "timestamp": "2026-04-23T19:05:20.612Z"
+    },
+    {
+      "notificationId": "c54cb023-3489-48ee-96b2-5a17d6f5569d",
+      "farmerId": "FMR-6E1EF639",
+      "type": "claim_update",
+      "message": "Your claim CLM-00027 has been submitted. Estimated amount: ₹35,081.",
+      "read": false,
+      "timestamp": "2026-04-23T19:05:54.197Z"
     }
   ],
   "activities": [
@@ -20070,6 +20220,14 @@
       "farmId": "KCF-1601",
       "farmerId": "FMR-943F1A33",
       "timestamp": "2026-04-23T14:26:59.891Z"
+    },
+    {
+      "activityId": "918987fb-a560-4400-8c20-4e2c67db1a17",
+      "type": "claim_submitted",
+      "desc": "New claim CLM-00027 by Ishita Dharmawat — flood (severe)",
+      "farmId": "KCF-2419",
+      "farmerId": "FMR-6E1EF639",
+      "timestamp": "2026-04-23T19:05:54.211Z"
     }
   ],
   "weather": [
@@ -20211,6 +20369,7 @@
     }
   ],
   "counters": {
-    "claim": 26
-  }
+    "claim": 27
+  },
+  "images": []
 }

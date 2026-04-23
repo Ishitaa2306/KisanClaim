@@ -8,25 +8,46 @@ const router = Router();
 // GET /api/v1/risk
 router.get('/risk', async (req, res) => {
   try {
+    const { level } = req.query;
     const allFarms = await farmStore.findAll();
-    const riskStats = { low: 0, medium: 0, high: 0, critical: 0 };
-    const topRisks = [];
+    
+    // STRICT ACTIVE CASES FILTER: Exclude Approved & Rejected. Everything else is considered active risk.
+    const activeRiskFarms = allFarms.filter(f => {
+      const decision = (f.explanation?.decision || 'PENDING').toUpperCase();
+      return !['APPROVED', 'REJECTED'].includes(decision);
+    });
 
-    allFarms.forEach(f => {
+    if (level) {
+      // Filter list view
+      const filtered = activeRiskFarms.filter(f => f.riskLevel?.toLowerCase() === level.toLowerCase());
+      const mappedList = filtered.map(f => ({
+        farmId: f.farmId, farmerName: f.farmerName, district: f.location.district,
+        state: f.location.state, riskScore: f.riskScore, alerts: f.alerts,
+        damagePercentage: f.ndviDrop || 0, fraudScore: f.fraudScore || 0,
+        riskLevel: f.riskLevel, status: f.explanation?.decision || 'Pending'
+      }));
+      return new ApiResponse(200, `Filtered risk list for ${level}`, { farms: mappedList }).send(res);
+    }
+
+    const riskStats = { low: 0, medium: 0, high: 0, critical: 0 };
+    const targetNodes = [];
+
+    activeRiskFarms.forEach(f => {
       if (riskStats[f.riskLevel] !== undefined) riskStats[f.riskLevel]++;
-      if (f.riskLevel === 'critical' && topRisks.length < 10) {
-        topRisks.push({
+      if (f.riskLevel === 'critical' || f.riskLevel === 'high') {
+        targetNodes.push({
           farmId: f.farmId, farmerName: f.farmerName, district: f.location.district,
           state: f.location.state, riskScore: f.riskScore, alerts: f.alerts,
-          damagePercentage: f.ndviDrop || 0,
-          fraudScore: f.fraudScore || 0,
+          damagePercentage: f.ndviDrop || 0, fraudScore: f.fraudScore || 0,
+          riskLevel: f.riskLevel, status: f.explanation?.decision || 'Pending'
         });
       }
     });
 
     new ApiResponse(200, 'Risk distribution map successfully retrieved', {
-      distribution: riskStats, totalAssessed: allFarms.length,
-      criticalFarms: topRisks.sort((a, b) => b.riskScore - a.riskScore),
+      distribution: riskStats, 
+      totalAssessed: activeRiskFarms.length,
+      targetNodes: targetNodes.sort((a, b) => b.riskScore - a.riskScore).slice(0, 20),
     }).send(res);
   } catch (err) {
     console.error('[INT] GET /risk error:', err.message);
@@ -116,7 +137,7 @@ router.get('/report/:farmId', async (req, res) => {
 // GET /api/v1/activity
 router.get('/activity', async (req, res) => {
   try {
-    const activities = await appStore.getActivities(75);
+    const activities = await appStore.getActivities(250);
     new ApiResponse(200, 'Universal activity stream retrieved', activities).send(res);
   } catch (err) {
     console.error('[INT] GET /activity error:', err.message);

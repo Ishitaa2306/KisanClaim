@@ -410,39 +410,93 @@ const appStore = {
     await dbManager.saveData();
   },
 
-  async getActivities(limit = 75) {
-    const db = await dbManager.getData();
-    const storeActivities = [...(db.activities || [])];
+  async getActivities(limit = 100) {
     const allFarms = await farmStore.findAll();
-    
-    const claimEvents = [];
-    const fraudAlerts = [];
-    const ndviUpdates = [];
-    let ndviIdx = 0;
+    const allEvents = [];
+    const now = new Date();
 
-    allFarms.forEach(f => {
-      if (f.activityLogs) {
-        f.activityLogs.forEach(log => {
-          claimEvents.push({ id: log.id, type: 'claim event', desc: log.action, farmId: f.farmId, timestamp: log.timestamp });
+    allFarms.forEach((f, idx) => {
+      // 1. WEATHER EVENTS (T-5 days)
+      if (f.weather && f.weather.condition !== 'Clear') {
+        allEvents.push({
+          activityId: `evt-wth-${f.farmId}-${idx}`,
+          eventType: 'WEATHER',
+          title: `${f.weather.condition} detected in ${f.location.district}`,
+          description: `Localized ${f.weather.condition.toLowerCase()} affecting agricultural output.`,
+          referenceId: f.farmId,
+          severity: f.weather.condition === 'Drought' || f.weather.condition === 'Flood' ? 'High' : 'Medium',
+          timestamp: new Date(now.getTime() - (5 * 60 * 60 * 1000) - (idx * 60000)).toISOString()
         });
       }
-      if (f.alerts && f.alerts.length > 0) {
-        fraudAlerts.push({ type: 'fraud alert', desc: `High risk anomaly triggered: ${f.alerts[0]}`, farmId: f.farmId, timestamp: f.enrolledAt });
+
+      // 2. NDVI EVENTS (T-4 hours)
+      if (f.ndviDrop > 15) {
+        allEvents.push({
+          activityId: `evt-ndvi-${f.farmId}-${idx}`,
+          eventType: 'NDVI',
+          title: `Significant NDVI drop: ${f.ndviDrop}%`,
+          description: `Satellite telemetry indicates major biomass reduction in ${f.cropType} canopy.`,
+          referenceId: f.farmId,
+          severity: f.ndviDrop > 50 ? 'High' : 'Medium',
+          timestamp: new Date(now.getTime() - (4 * 60 * 60 * 1000) - (idx * 60000)).toISOString()
+        });
       }
-      if (f.analytics && f.ndviDrop > 20) {
-        const offset = ndviIdx * 120000;
-        ndviUpdates.push({ type: 'ndvi update', desc: `NDVI scanned dropping by ${f.ndviDrop}%`, farmId: f.farmId, timestamp: new Date(Date.now() - offset).toISOString() });
-        ndviIdx++;
+
+      // 3. RISK EVENTS (T-3 hours)
+      if (f.riskLevel === 'critical' || f.riskLevel === 'high') {
+        allEvents.push({
+          activityId: `evt-risk-${f.farmId}-${idx}`,
+          eventType: 'RISK',
+          title: `Risk Escalated: ${f.riskLevel.toUpperCase()}`,
+          description: `Asset flagged as ${f.riskLevel} due to multi-modal anomaly intersection.`,
+          referenceId: f.farmId,
+          severity: f.riskLevel === 'critical' ? 'High' : 'Medium',
+          timestamp: new Date(now.getTime() - (3 * 60 * 60 * 1000) - (idx * 60000)).toISOString()
+        });
+      }
+
+      // 4. FRAUD EVENTS (T-2 hours)
+      if (f.fraudScore > 40) {
+        allEvents.push({
+          activityId: `evt-frd-${f.farmId}-${idx}`,
+          eventType: 'FRAUD',
+          title: `Suspicious Pattern Detected`,
+          description: `Claim anomaly score: ${f.fraudScore}. Neighboring farm correlation mismatch.`,
+          referenceId: f.farmId,
+          severity: f.fraudScore > 70 ? 'High' : 'Medium',
+          timestamp: new Date(now.getTime() - (2 * 60 * 60 * 1000) - (idx * 60000)).toISOString()
+        });
+      }
+
+      // 5. CLAIM EVENTS (T-1 hour to Now)
+      const decision = f.explanation?.decision || 'Pending';
+      if (decision !== 'Pending') {
+        allEvents.push({
+          activityId: `evt-clm-${f.farmId}-${idx}`,
+          eventType: 'CLAIM',
+          title: `Claim ${decision}`,
+          description: `Formal claim lifecycle reached terminal state: ${decision}.`,
+          referenceId: f.farmId,
+          severity: decision === 'Rejected' ? 'High' : 'Low',
+          timestamp: new Date(now.getTime() - (1 * 60 * 60 * 1000) - (idx * 60000)).toISOString()
+        });
       }
     });
 
-    const maxPerType = Math.floor(limit / 4);
-    const sampledClaims = claimEvents.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp)).slice(0, maxPerType);
-    const sampledFraud = fraudAlerts.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp)).slice(0, maxPerType);
-    const sampledNdvi = ndviUpdates.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp)).slice(0, maxPerType);
+    // Merge with any manual store activities (mapped to new schema)
+    const db = await dbManager.getData();
+    const manualActivities = (db.activities || []).map(act => ({
+      activityId: act.activityId,
+      eventType: (act.type || 'SYSTEM').toUpperCase(),
+      title: act.desc,
+      description: 'Manual system log entry.',
+      referenceId: act.farmId || 'SYSTEM',
+      severity: 'Low',
+      timestamp: act.timestamp
+    }));
 
-    const merged = [...storeActivities, ...sampledClaims, ...sampledFraud, ...sampledNdvi];
-    return merged.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp)).slice(0, limit);
+    const merged = [...manualActivities, ...allEvents];
+    return merged.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp)).slice(0, 500);
   },
 
   async getHistory(farmerId) {

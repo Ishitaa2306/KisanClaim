@@ -12,6 +12,10 @@ import Settings from './pages/Settings'
 import MapVisualization from './pages/MapVisualization'
 import Report from './pages/Report'
 import MobileContainer from './pages/mobile/MobileContainer'
+import Claims from './pages/Claims'
+import FinancialAnalytics from './pages/FinancialAnalytics'
+import DamageAnalytics from './pages/DamageAnalytics'
+import RiskList from './pages/RiskList'
 
 function App() {
   return (
@@ -26,9 +30,12 @@ function App() {
         <Route path="case/:id" element={<FarmAnalysis />} />
         <Route path="analysis/:id" element={<FarmAnalysis />} />
         <Route path="fraud" element={<FraudDetection />} />
-        <Route path="claims" element={<ClaimResult />} />
+        <Route path="claims" element={<Claims />} />
         <Route path="claims/result" element={<ClaimResult />} />
+        <Route path="analytics/financial" element={<FinancialAnalytics />} />
+        <Route path="analytics/damage" element={<DamageAnalytics />} />
         <Route path="risk" element={<RiskMatrix />} />
+        <Route path="risk/list" element={<RiskList />} />
         <Route path="report/:id" element={<Report />} />
         <Route path="map" element={<MapVisualization />} />
         <Route path="logs" element={<ClaimLogs />} />
