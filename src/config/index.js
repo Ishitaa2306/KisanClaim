@@ -13,13 +13,8 @@ const config = Object.freeze({
   /** True when running in production */
   isProduction: process.env.NODE_ENV === 'production',
 
-  // ── Future integrations ────────────────────────────────────
-  // database: { url: process.env.DATABASE_URL },
-  // sentinel: {
-  //   clientId: process.env.SENTINEL_HUB_CLIENT_ID,
-  //   clientSecret: process.env.SENTINEL_HUB_CLIENT_SECRET,
-  // },
-  // ml: { serviceUrl: process.env.ML_SERVICE_URL },
+  /** MongoDB connection URI */
+  mongoUri: process.env.MONGODB_URI || 'mongodb://localhost:27017/kisanclaim',
 
   /** NDVI thresholds — centralised so they can be tuned without code changes */
   ndvi: {

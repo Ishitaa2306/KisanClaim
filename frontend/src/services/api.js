@@ -89,6 +89,13 @@ export const api = {
   },
 
   /**
+   * Get a single claim by ID — uses the SAME stored data as the list view
+   */
+  getClaimById: async (id) => {
+    return fetchApi(`/api/claim/${id}`);
+  },
+
+  /**
    * Update status of a specific claim
    */
   updateClaimStatus: async (id, status) => {

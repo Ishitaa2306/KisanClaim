@@ -113,12 +113,11 @@ export default function MapVisualization() {
                       </div>
                       
                       <div className="space-y-2 mb-4">
-                        <p className="text-xs text-slate-600 m-0"><span className="font-bold text-slate-800">Location:</span> {farm.lat.toFixed(2)}°, {farm.lon.toFixed(2)}°</p>
+                        <p className="text-xs text-slate-600 m-0"><span className="font-bold text-slate-800">Farmer:</span> {farm.farmerName}</p>
                         <p className="text-xs text-slate-600 m-0"><span className="font-bold text-slate-800">Damage:</span> {farm.damage}%</p>
-                        <p className="text-xs text-slate-600 m-0 uppercase flex items-center gap-1">
-                          <span className="font-bold text-slate-800">Risk:</span> 
-                          <span className={`font-black ${farm.riskLevel === 'high' || farm.riskLevel === 'critical' ? 'text-red-600' : farm.riskLevel === 'medium' ? 'text-yellow-600' : 'text-emerald-600'}`}>
-                            {farm.riskLevel}
+                        <p className="text-xs text-slate-600 m-0"><span className="font-bold text-slate-800">Status:</span>
+                          <span className={` ml-1 font-bold ${farm.status === 'Flagged' ? 'text-red-600' : farm.status === 'Approved' ? 'text-emerald-600' : 'text-slate-600'}`}>
+                             {farm.status}
                           </span>
                         </p>
                       </div>

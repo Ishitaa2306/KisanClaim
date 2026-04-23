@@ -270,15 +270,36 @@ function generateFarms(count = 200, seed = 42) {
 
   const alertTypes = ['Pest Attack', 'Hailstorm', 'Drought Warning', 'Severe Rainfall'];
 
+  // ── Target distribution: ~35% Rejected, ~35% Approved, ~30% Under Review ──
+  // We achieve this by pre-assigning outcome categories and then generating
+  // damage + fraudScore values that produce the desired decision from the engine.
+  //
+  // Decision engine rules:
+  //   damage < 10             → Rejected
+  //   damage >= 10 & fraud<50 → Approved
+  //   fraud >= 50             → Under Review
+  //
+  const numRejected = Math.round(count * 0.35);   // 70
+  const numApproved = Math.round(count * 0.35);   // 70
+  const numReview   = count - numRejected - numApproved; // 60
+
+  const outcomeSlots = shuffle(rng, [
+    ...Array(numRejected).fill('rejected'),
+    ...Array(numApproved).fill('approved'),
+    ...Array(numReview).fill('review'),
+  ]);
+
+  const { evaluateDecision } = require('../utils/decisionEngine');
+
   farms.forEach((f, i) => {
     f.farmId = `KCF-${String(i + 1).padStart(4, '0')}`;
     delete f._s;
 
-    // Apply exact balanced riskLevel
+    // Apply exact balanced riskLevel (kept for visual risk classification)
     const rLevel = riskAllocations[i];
     f.riskLevel = rLevel;
 
-    // Tie riskScore to level so it maps accurately to severity
+    // riskScore stays tied to riskLevel for backward compat with UI risk badges
     if (rLevel === 'low') {
        f.riskScore = Math.floor(randFloat(rng, 5, 25));
     } else if (rLevel === 'medium') {
@@ -286,7 +307,7 @@ function generateFarms(count = 200, seed = 42) {
     } else if (rLevel === 'high') {
        f.riskScore = Math.floor(randFloat(rng, 51, 75));
     } else {
-       f.riskScore = Math.floor(randFloat(rng, 76, 99)); // Avoid 100 for variation
+       f.riskScore = Math.floor(randFloat(rng, 76, 99));
     }
 
     // Dynamic alerts
@@ -306,45 +327,57 @@ function generateFarms(count = 200, seed = 42) {
       condition: rLevel === 'critical' || rLevel === 'high' ? pick(rng, ['Heavy Rain', 'Drought']) : pick(rng, ['Clear', 'Partly Cloudy', 'Light Rain'])
     };
 
-    // Satellite imagery — healthy baseline vs post-event damage
-    // NDVI and Severity computation
+    // ══════════════════════════════════════════════════════════════
+    //  CONTROLLED DAMAGE + FRAUD SCORE GENERATION
+    //  Generate values that produce the target outcome from the engine
+    // ══════════════════════════════════════════════════════════════
+
+    const outcome = outcomeSlots[i];
     let dropPercentTarget;
-    if (rLevel === 'low') {
-        dropPercentTarget = randFloat(rng, 1, 9, 1);
-    } else if (rLevel === 'medium') {
-        dropPercentTarget = randFloat(rng, 10, 29, 1);
-    } else if (rLevel === 'high') {
-        dropPercentTarget = randFloat(rng, 30, 49, 1);
+    let fraudScore;
+
+    if (outcome === 'rejected') {
+      // damage < 10 → Rejected (fraud doesn't matter, keep it low-to-medium)
+      dropPercentTarget = randFloat(rng, 1, 9.5, 1);
+      fraudScore = Math.floor(randFloat(rng, 5, 45));
+    } else if (outcome === 'approved') {
+      // damage >= 10 AND fraudScore < 50 → Approved
+      dropPercentTarget = randFloat(rng, 10, 85, 1);
+      fraudScore = Math.floor(randFloat(rng, 5, 48));
     } else {
-        dropPercentTarget = randFloat(rng, 50, 90, 1);
+      // fraudScore >= 50 → Under Review (damage can be anything >= 10)
+      dropPercentTarget = randFloat(rng, 10, 90, 1);
+      fraudScore = Math.floor(randFloat(rng, 50, 92));
     }
 
     f.ndviAfter = parseFloat((f.ndviBefore * (1 - (dropPercentTarget / 100))).toFixed(3));
     f.ndviDrop = parseFloat(dropPercentTarget.toFixed(1));
 
+    // ── Severity classification ──
     if (f.ndviDrop < 10) f.severity = "minimal";
     else if (f.ndviDrop >= 10 && f.ndviDrop < 30) f.severity = "low";
     else if (f.ndviDrop >= 30 && f.ndviDrop < 50) f.severity = "moderate";
     else if (f.ndviDrop >= 50 && f.ndviDrop < 70) f.severity = "high";
     else f.severity = "severe";
 
+    // ══════════════════════════════════════════════════════════════
+    //  FRAUD SCORE — stored as single source of truth
+    // ══════════════════════════════════════════════════════════════
+    f.fraudScore = fraudScore;
+
     // Strictly Predefined Valid Image Sets (Agriculture Only & No AI)
     const healthyImages = [
-      "https://images.unsplash.com/photo-1500382017468-9049fed747ef", // Healthy wheat/crop field
-      "https://images.unsplash.com/photo-1501004318641-b39e6451bec6", // Valid green farmland
+      "https://images.unsplash.com/photo-1500382017468-9049fed747ef",
+      "https://images.unsplash.com/photo-1501004318641-b39e6451bec6",
     ];
-
     const moderateDamageImages = [
-      "https://images.unsplash.com/photo-1502082553048-f009c37129b9", // Slight damage/browning
+      "https://images.unsplash.com/photo-1502082553048-f009c37129b9",
     ];
-
     const severeDamageImages = [
-      "https://images.unsplash.com/photo-1583245553131-0e7d36409271", // Dry cracked barren field
+      "https://images.unsplash.com/photo-1583245553131-0e7d36409271",
     ];
 
-    // Absolute strict logic mapping
     f.beforeImage = healthyImages[1]; 
-
     if (f.ndviDrop < 10) {
       f.afterImage = healthyImages[0];
     } else if (f.ndviDrop >= 10 && f.ndviDrop <= 30) {
@@ -370,31 +403,27 @@ function generateFarms(count = 200, seed = 42) {
         Math.floor(f.ndviDrop + randFloat(rng, 0, 5, 1))
       ],
       riskScore: f.riskScore,
+      fraudScore: f.fraudScore,
       region: `${f.location.state}/${f.location.district}`
     };
 
-    // 🧩 2. EXPLAINABILITY DATA
-    let decision = "Approved";
-    let reason = "Claim verified. NDVI drop and field data match reported damage.";
-    if (f.riskLevel === 'high' || f.riskLevel === 'critical') {
-       if (f.alerts && f.alerts.length > 0) {
-          decision = "Flagged";
-          reason = `Flagged for manual review due to ${f.alerts[0]} anomaly.`;
-       } else {
-          decision = "Rejected";
-          reason = "Rejected due to severe metadata inconsistencies and lack of corroborated local weather events.";
-       }
-    } else if (f.severity === 'minimal') {
-       decision = "Rejected";
-       reason = "Rejected because satellite evidence shows minimal to no damage.";
-    }
+    // ══════════════════════════════════════════════════════════════
+    //  🧩 2. SINGLE SOURCE OF TRUTH — Decision + Explanation
+    //  evaluateDecision runs ONCE here. Result is stored permanently.
+    // ══════════════════════════════════════════════════════════════
+    const { status, reason } = evaluateDecision(f.ndviDrop, f.fraudScore);
+
+    let fraudRisk = 'low';
+    if (f.fraudScore >= 60) fraudRisk = 'high';
+    else if (f.fraudScore >= 25) fraudRisk = 'medium';
 
     f.explanation = {
       ndviDrop: f.ndviDrop,
       damageLevel: f.severity,
-      fraudRisk: f.riskLevel === 'critical' ? 'high' : f.riskLevel,
+      fraudScore: f.fraudScore,
+      fraudRisk: fraudRisk,
       reason: reason,
-      decision: decision
+      decision: status
     };
   });
 

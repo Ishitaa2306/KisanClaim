@@ -136,7 +136,7 @@ const MobileHome = () => {
         </button>
 
         <button onClick={() => {
-          const weatherLoc = primaryFarm?.location?.state || 'Punjab';
+          const weatherLoc = primaryFarm?.location?.district || primaryFarm?.location?.state || 'Pune';
           navigate(`/mobile/weather/${weatherLoc}`);
         }} className="bg-white p-4 rounded-lg flex items-center gap-4 shadow-sm border border-gray-200 hover:border-green-500 hover:shadow transition-all group text-left">
           <div className="p-3 bg-green-50 rounded-lg group-hover:bg-green-100 transition-colors">

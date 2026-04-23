@@ -13,7 +13,8 @@
 
 const { calculateDamage } = require('../utils/ndviAnalyzer');
 const { calculateClaim } = require('./claimService');
-const { analyzeFraud } = require('./fraudService');
+const { analyzeFraud, warmCache } = require('./fraudService');
+const { evaluateDecision } = require('../utils/decisionEngine');
 
 /**
  * Run the full analysis pipeline on a single farm record.
@@ -41,8 +42,24 @@ function analyzeOne(farm) {
   );
 
   // ── Compose final response ────────────────────────────────
+  const { status, reason } = evaluateDecision(damageResult.damagePercentage, fraudResult.fraudScore);
+  
+  // Format fraudStatus based on the strict engine logic for UI compatibility
+  let fraudStatus = 'LOW';
+  if (fraudResult.fraudScore >= 50) fraudStatus = 'CRITICAL';
+  else if (fraudResult.fraudScore >= 30) fraudStatus = 'MEDIUM';
+  
+  const flagged = fraudResult.fraudScore >= 50;
+
   return {
     ...farm,
+    // Provide the exact requested fields in the payload explicitly
+    consistentDecision: {
+      damage: damageResult.damagePercentage,
+      fraudScore: fraudResult.fraudScore,
+      status: status,
+      reason: reason
+    },
     analysis: {
       damageAssessment: {
         ...damageResult,
@@ -56,15 +73,21 @@ function analyzeOne(farm) {
         completedAt: new Date().toISOString(),
       },
     },
-    // ── Convenience top-level fields for quick access ────────
+    explanation: {
+      ndviDrop: damageResult.damagePercentage.toFixed(1),
+      damageLevel: status === 'Rejected' ? 'Low' : 'High',
+      fraudRisk: fraudStatus.toLowerCase(),
+      reason: reason,
+      decision: status,
+    },
     summary: {
       damagePercentage: damageResult.damagePercentage,
       severity: damageResult.severity,
       claimAmount: claimResult.claimAmount,
       fraudScore: fraudResult.fraudScore,
-      fraudStatus: fraudResult.fraudStatus,
-      flagged: fraudResult.flag,
-      recommendation: fraudResult.recommendation,
+      fraudStatus: fraudStatus,
+      flagged: flagged,
+      recommendation: status === 'Approved' ? 'Automated approval eligible' : 'Requires manual review',
     },
   };
 }
@@ -76,6 +99,9 @@ function analyzeOne(farm) {
  * @returns {{ farms: object[], aggregates: object }}
  */
 function analyzeMany(farms) {
+  // Pre-warm fraud stats cache with all farms to ensure stable global statistics
+  warmCache(farms);
+
   const analyzed = farms.map(analyzeOne);
 
   // ── Compute aggregates ──────────────────────────────────────

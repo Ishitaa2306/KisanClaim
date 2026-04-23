@@ -1,21 +1,32 @@
 /**
  * KisanClaim — Server entry point.
  *
- * Boots the Express application and starts listening.
- * Handles graceful shutdown on SIGTERM / SIGINT.
+ * Bootstraps the application, seeds initial JSON data if needed,
+ * and handles graceful shutdown.
  */
 
 const config = require('./src/config');
 const app = require('./src/app');
+const farmStore = require('./src/models/Farm');
+const appStore = require('./src/models/Store');
 
-const server = app.listen(config.port, () => {
-  console.log(`
+let server;
+
+async function start() {
+  // Initialize JSON stores (seeds data if database.json is empty)
+  await farmStore.initialize();
+  await appStore.initialize();
+
+  // Start Express
+  server = app.listen(config.port, () => {
+    console.log(`
   ╔══════════════════════════════════════════════════════════╗
   ║                                                          ║
   ║     🌾  KisanClaim API Server                            ║
   ║                                                          ║
   ║     Environment : ${config.env.padEnd(36)}║
   ║     Port        : ${String(config.port).padEnd(36)}║
+  ║     Database    : ${'Local JSON'.padEnd(36)}║
   ║     Time        : ${new Date().toISOString().padEnd(36)}║
   ║                                                          ║
   ║     Health      : http://localhost:${config.port}/health${' '.repeat(Math.max(0, 18 - String(config.port).length))}║
@@ -23,16 +34,24 @@ const server = app.listen(config.port, () => {
   ║                                                          ║
   ╚══════════════════════════════════════════════════════════╝
   `);
+  });
+}
+
+start().catch(err => {
+  console.error('💥 Failed to start server:', err);
+  process.exit(1);
 });
 
 // ── Graceful shutdown ────────────────────────────────────────
 
-function shutdown(signal) {
+async function shutdown(signal) {
   console.log(`\n⏳ Received ${signal}. Shutting down gracefully...`);
-  server.close(() => {
-    console.log('✅ Server closed. Goodbye!');
-    process.exit(0);
-  });
+  if (server) {
+    server.close(() => {
+      console.log('✅ Server closed. Goodbye!');
+      process.exit(0);
+    });
+  }
 
   // Force kill after 10s if connections don't drain
   setTimeout(() => {
@@ -44,7 +63,6 @@ function shutdown(signal) {
 process.on('SIGTERM', () => shutdown('SIGTERM'));
 process.on('SIGINT', () => shutdown('SIGINT'));
 
-// Catch unhandled rejections / exceptions in production
 process.on('unhandledRejection', (reason) => {
   console.error('💥 Unhandled Rejection:', reason);
 });

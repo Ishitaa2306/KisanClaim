@@ -1,38 +1,50 @@
 /**
- * Central In-Memory Data Store for KisanClaim.
+ * Central Data Store for KisanClaim — JSON File backed.
  *
  * Manages: farmers, claims, notifications, activities, weatherData.
- * Farm data is managed separately by FarmStore (Farm.js).
- *
- * Singleton — shared across the entire application.
  */
 
 const { v4: uuidv4 } = require('uuid');
+const dbManager = require('../data/dbManager');
 const farmStore = require('./Farm');
 
-class AppStore {
-  constructor() {
-    this.farmers = new Map();
-    this.claims = new Map();
-    this.notifications = new Map();   // key = farmerId, value = array
-    this.activities = [];
-    this.weatherData = new Map();     // key = location string
-    this._claimCounter = 0;
-
-    this._seedFarmers();
-    this._seedWeather();
-    console.log(`  ✔  AppStore initialised: ${this.farmers.size} farmers, ${this.claims.size} claims`);
-  }
+const appStore = {
 
   // ═══════════════════════════════════════════════════════════════
-  //  SEED: Create a farmer for every farm
+  //  INITIALIZATION
   // ═══════════════════════════════════════════════════════════════
 
-  _seedFarmers() {
-    const allFarms = farmStore.findAll();
+  async initialize() {
+    const db = await dbManager.getData();
+    
+    // Initialize arrays if missing
+    if (!db.farmers) db.farmers = [];
+    if (!db.claims) db.claims = [];
+    if (!db.notifications) db.notifications = [];
+    if (!db.activities) db.activities = [];
+    if (!db.weather) db.weather = [];
+
+    if (db.farmers.length > 0) {
+      console.log(`  ✔  AppStore: ${db.farmers.length} farmers, ${db.claims.length} claims already in JSON DB`);
+      return;
+    }
+
+    console.log('  ⏳ AppStore: Seeding farmers, claims, weather...');
+    await this._seedFarmers(db);
+    await this._seedWeather(db);
+
+    await dbManager.saveData();
+    console.log(`  ✔  AppStore initialised: ${db.farmers.length} farmers, ${db.claims.length} claims`);
+  },
+
+  async _seedFarmers(db) {
+    const allFarms = await farmStore.findAll();
+    const farmToFarmerMap = {};
+
     allFarms.forEach((farm, idx) => {
       const farmerId = `FMR-${String(idx + 1).padStart(4, '0')}`;
-      const farmer = {
+      
+      db.farmers.push({
         farmerId,
         name: farm.farmerName,
         phone: `+91${String(7000000000 + idx * 37 + (idx * idx) % 9999)}`,
@@ -40,220 +52,251 @@ class AppStore {
         linkedFarmIds: [farm.farmId],
         address: `${farm.location.district}, ${farm.location.state}`,
         registeredAt: farm.enrolledAt,
-      };
-      this.farmers.set(farmerId, farmer);
+      });
 
-      // Also store a reverse lookup: farmId → farmerId
-      if (!this._farmToFarmer) this._farmToFarmer = {};
-      this._farmToFarmer[farm.farmId] = farmerId;
+      db.notifications.push({
+        notificationId: uuidv4(),
+        farmerId,
+        type: 'info',
+        message: `Welcome to KisanClaim, ${farm.farmerName}. Your farm ${farm.farmId} is now enrolled.`,
+        read: false,
+        timestamp: farm.enrolledAt,
+      });
 
-      // Initialize notification inbox
-      this.notifications.set(farmerId, [
-        {
-          id: uuidv4(),
-          type: 'info',
-          message: `Welcome to KisanClaim, ${farm.farmerName}. Your farm ${farm.farmId} is now enrolled.`,
-          read: false,
-          timestamp: farm.enrolledAt,
-        },
-      ]);
+      farmToFarmerMap[farm.farmId] = farmerId;
     });
 
-    // Seed a handful of pre-existing claims for dashboard data
+    await dbManager.saveData(); // Save to make them available for claims
+
+    // Seed claims — use the stored farm decision, DO NOT override
     const sampleFarms = allFarms.filter(f => f.riskLevel === 'high' || f.riskLevel === 'critical').slice(0, 15);
-    sampleFarms.forEach(farm => {
-      const farmerId = this._farmToFarmer[farm.farmId];
-      this._createClaimInternal({
+    for (const farm of sampleFarms) {
+      const farmerId = farmToFarmerMap[farm.farmId];
+      await this._createClaimInternal({
         farmerId,
         farmId: farm.farmId,
         damageType: farm.severity === 'severe' ? 'Flood' : farm.severity === 'high' ? 'Drought' : 'Pest Attack',
         description: `Reported ${farm.severity} damage to ${farm.cropType} crop in ${farm.location.district}.`,
         images: [farm.afterImage || ''],
-      }, false); // silent = no push to activity during seed
-    });
+      }, false);
+      // NO override — claim and farm keep their stored decision
+    }
 
-    // Also create some approved/processed claims from low-risk farms
     const lowRiskFarms = allFarms.filter(f => f.riskLevel === 'low').slice(0, 10);
-    lowRiskFarms.forEach(farm => {
-      const farmerId = this._farmToFarmer[farm.farmId];
-      const claim = this._createClaimInternal({
-        farmerId,
-        farmId: farm.farmId,
-        damageType: 'Weather',
-        description: `Minor weather impact on ${farm.cropType}. Verified by satellite.`,
+    for (const [idx, farm] of lowRiskFarms.entries()) {
+      const farmerId = farmToFarmerMap[farm.farmId];
+      
+      const damageTypes = ['Cyclonic Storm', 'Flash Flood', 'Locust Infestation', 'Monsoon Delay', 'Unseasonal Rain', 'Heat Wave', 'Pest Attack', 'Drought', 'Soil Salinity', 'Wild Animal Entry'];
+      const dt = damageTypes[idx % damageTypes.length];
+      
+      await this._createClaimInternal({
+        farmerId, farmId: farm.farmId, damageType: dt,
+        description: `Impact assessment for ${dt.toLowerCase()} on ${farm.cropType}. Statistical verify pending.`,
         images: [farm.afterImage || ''],
       }, false);
-      // Mark as processed
-      claim.status = 'Approved';
-      claim.processedAt = new Date(Date.now() - 86400000 * 2).toISOString();
-      claim.timeline.push({
-        action: 'Claim Approved',
-        timestamp: claim.processedAt,
-        detail: 'Automated approval — low fraud risk, verified satellite data.',
-      });
-    });
-  }
+      // NO override — claim keeps whatever status the engine determined
+    }
+  },
 
-  _seedWeather() {
+  async _seedWeather(db) {
     const locations = [
-      { location: 'Punjab', temperature: 34, rainfall: 12, humidity: 55, condition: 'Partly Cloudy', forecast: 'Light rain expected' },
-      { location: 'Haryana', temperature: 38, rainfall: 3, humidity: 40, condition: 'Clear', forecast: 'Dry spell continues' },
-      { location: 'Uttar Pradesh', temperature: 36, rainfall: 45, humidity: 72, condition: 'Heavy Rain', forecast: 'Flood warning active' },
-      { location: 'Madhya Pradesh', temperature: 33, rainfall: 8, humidity: 58, condition: 'Partly Cloudy', forecast: 'Normal conditions' },
-      { location: 'Rajasthan', temperature: 42, rainfall: 0, humidity: 22, condition: 'Clear', forecast: 'Drought advisory' },
-      { location: 'Maharashtra', temperature: 31, rainfall: 25, humidity: 68, condition: 'Light Rain', forecast: 'Monsoon approaching' },
-      { location: 'Gujarat', temperature: 37, rainfall: 5, humidity: 45, condition: 'Clear', forecast: 'Stable weather' },
-      { location: 'Karnataka', temperature: 29, rainfall: 18, humidity: 65, condition: 'Cloudy', forecast: 'Intermittent showers' },
-      { location: 'Andhra Pradesh', temperature: 35, rainfall: 10, humidity: 60, condition: 'Partly Cloudy', forecast: 'Normal conditions' },
-      { location: 'Tamil Nadu', temperature: 32, rainfall: 30, humidity: 75, condition: 'Heavy Rain', forecast: 'Cyclone watch' },
-      { location: 'Bihar', temperature: 36, rainfall: 40, humidity: 78, condition: 'Heavy Rain', forecast: 'Flooding risk' },
-      { location: 'West Bengal', temperature: 33, rainfall: 35, humidity: 80, condition: 'Thunderstorm', forecast: 'Severe weather alert' },
-      { location: 'Telangana', temperature: 34, rainfall: 15, humidity: 62, condition: 'Cloudy', forecast: 'Moderate rain expected' },
-      { location: 'Odisha', temperature: 32, rainfall: 28, humidity: 70, condition: 'Light Rain', forecast: 'Post-cyclone recovery' },
-      { location: 'Chhattisgarh', temperature: 35, rainfall: 20, humidity: 64, condition: 'Partly Cloudy', forecast: 'Normal monsoon activity' },
-      { location: 'Jharkhand', temperature: 34, rainfall: 22, humidity: 66, condition: 'Cloudy', forecast: 'Moderate precipitation' },
-      { location: 'Assam', temperature: 28, rainfall: 55, humidity: 85, condition: 'Heavy Rain', forecast: 'Flash flood warning' },
+      { location: 'punjab', temperature: 34, rainfall: 12, humidity: 55, condition: 'Partly Cloudy', forecast: 'Light rain expected' },
+      { location: 'haryana', temperature: 38, rainfall: 3, humidity: 40, condition: 'Clear', forecast: 'Dry spell continues' },
+      { location: 'uttar pradesh', temperature: 36, rainfall: 45, humidity: 72, condition: 'Heavy Rain', forecast: 'Flood warning active' },
+      { location: 'madhya pradesh', temperature: 33, rainfall: 8, humidity: 58, condition: 'Partly Cloudy', forecast: 'Normal conditions' },
+      { location: 'rajasthan', temperature: 42, rainfall: 0, humidity: 22, condition: 'Clear', forecast: 'Drought advisory' },
+      { location: 'maharashtra', temperature: 31, rainfall: 25, humidity: 68, condition: 'Light Rain', forecast: 'Monsoon approaching' },
+      { location: 'gujarat', temperature: 37, rainfall: 5, humidity: 45, condition: 'Clear', forecast: 'Stable weather' },
+      { location: 'karnataka', temperature: 29, rainfall: 18, humidity: 65, condition: 'Cloudy', forecast: 'Intermittent showers' },
+      { location: 'andhra pradesh', temperature: 35, rainfall: 10, humidity: 60, condition: 'Partly Cloudy', forecast: 'Normal conditions' },
+      { location: 'tamil nadu', temperature: 32, rainfall: 30, humidity: 75, condition: 'Heavy Rain', forecast: 'Cyclone watch' },
+      { location: 'bihar', temperature: 36, rainfall: 40, humidity: 78, condition: 'Heavy Rain', forecast: 'Flooding risk' },
+      { location: 'west bengal', temperature: 33, rainfall: 35, humidity: 80, condition: 'Thunderstorm', forecast: 'Severe weather alert' },
+      { location: 'telangana', temperature: 34, rainfall: 15, humidity: 62, condition: 'Cloudy', forecast: 'Moderate rain expected' },
+      { location: 'odisha', temperature: 32, rainfall: 28, humidity: 70, condition: 'Light Rain', forecast: 'Post-cyclone recovery' },
+      { location: 'chhattisgarh', temperature: 35, rainfall: 20, humidity: 64, condition: 'Partly Cloudy', forecast: 'Normal monsoon activity' },
+      { location: 'jharkhand', temperature: 34, rainfall: 22, humidity: 66, condition: 'Cloudy', forecast: 'Moderate precipitation' },
+      { location: 'assam', temperature: 28, rainfall: 55, humidity: 85, condition: 'Heavy Rain', forecast: 'Flash flood warning' },
     ];
-    locations.forEach(w => {
-      this.weatherData.set(w.location.toLowerCase(), w);
-    });
-  }
+    db.weather.push(...locations);
+  },
 
   // ═══════════════════════════════════════════════════════════════
   //  FARMER OPERATIONS
   // ═══════════════════════════════════════════════════════════════
 
-  getFarmer(farmerId) {
-    return this.farmers.get(farmerId) || null;
-  }
+  async getFarmer(farmerId) {
+    const db = await dbManager.getData();
+    return db.farmers.find(f => f.farmerId === farmerId) || null;
+  },
 
-  getFarmerByFarmId(farmId) {
-    const farmerId = this._farmToFarmer?.[farmId];
-    return farmerId ? this.farmers.get(farmerId) : null;
-  }
+  async getFarmerByPhone(phone) {
+    const db = await dbManager.getData();
+    return db.farmers.find(f => f.phone === phone || f.phone === `+91${phone}`) || null;
+  },
 
-  getAllFarmers() {
-    return Array.from(this.farmers.values());
-  }
+  async getFarmerByFarmId(farmId) {
+    const db = await dbManager.getData();
+    return db.farmers.find(f => f.linkedFarmIds && f.linkedFarmIds.includes(farmId)) || null;
+  },
+
+  async getAllFarmers() {
+    const db = await dbManager.getData();
+    return [...(db.farmers || [])];
+  },
+
+  async createFarmer(farmerData) {
+    const db = await dbManager.getData();
+    db.farmers.push(farmerData);
+    await dbManager.saveData();
+    return farmerData;
+  },
 
   // ═══════════════════════════════════════════════════════════════
   //  CLAIM OPERATIONS
   // ═══════════════════════════════════════════════════════════════
 
-  _createClaimInternal(input, pushActivity = true) {
+  async _createClaimInternal(input, pushActivity = true) {
     const { farmerId, farmId, damageType, description, images } = input;
-    const farm = farmId ? farmStore.findById(farmId) : null;
-    const farmer = this.getFarmer(farmerId);
+    const db = await dbManager.getData();
+    
+    const farm = farmId ? await farmStore.findById(farmId) : null;
+    const farmer = await this.getFarmer(farmerId);
 
-    this._claimCounter++;
-    const claimId = `CLM-${String(this._claimCounter).padStart(5, '0')}`;
+    const seq = await dbManager.getNextSequence('claim');
+    const claimId = `CLM-${String(seq).padStart(5, '0')}`;
 
-    // ── Calculate damage ──
-    // If farm exists, use real NDVI. If not, use synthetic 45% damage for demo
+    // ══════════════════════════════════════════════════════════════
+    //  READ from the farm's single source of truth — NEVER recompute
+    // ══════════════════════════════════════════════════════════════
     const ndviBefore = farm?.ndviBefore || 0.70;
     const ndviAfter = farm?.ndviAfter || (farm ? 0.40 : 0.38);
-    const ndviDrop = farm 
-      ? parseFloat((((ndviBefore - ndviAfter) / ndviBefore) * 100).toFixed(1))
-      : 45.0; // Synthetic damage for naked claims
+    const ndviDrop = farm?.ndviDrop || parseFloat((((ndviBefore - ndviAfter) / ndviBefore) * 100).toFixed(1));
 
-    // Damage level
     let damageLevel = 'low';
     if (ndviDrop >= 50) damageLevel = 'severe';
     else if (ndviDrop >= 30) damageLevel = 'high';
     else if (ndviDrop >= 10) damageLevel = 'moderate';
 
-    // Claim amount calculation
     const insuredAmount = farm?.insuredAmount || 125000;
     const claimAmount = Math.round(insuredAmount * (ndviDrop / 100) * 0.85);
 
-    // Fraud scoring
-    // Randomize slightly for dynamic users to avoid "same values everywhere"
-    const baseScore = farm?.riskScore || 25;
-    let fraudScore = Math.min(100, Math.max(0, baseScore + Math.floor(Math.random() * 20 - 10)));
-    
+    // Use farm's stored fraudScore as the SINGLE SOURCE OF TRUTH
+    // For new farms without a stored score, generate one
+    let fraudScore;
+    if (farm && farm.fraudScore !== undefined) {
+      fraudScore = farm.fraudScore;
+    } else if (farm) {
+      fraudScore = farm.riskScore || 25;
+    } else {
+      fraudScore = Math.floor(Math.random() * 40) + 5; // 5-44 for new claims
+    }
+
     let fraudRisk = 'low';
-    if (fraudScore >= 70) fraudRisk = 'high';
-    else if (fraudScore >= 40) fraudRisk = 'medium';
+    if (fraudScore >= 60) fraudRisk = 'high';
+    else if (fraudScore >= 25) fraudRisk = 'medium';
+
+    // Use the farm's stored decision if available, otherwise run engine ONCE
+    let initialStatus, reason;
+    if (farm && farm.explanation && farm.explanation.decision && farm.explanation.reason) {
+      initialStatus = farm.explanation.decision;
+      reason = farm.explanation.reason;
+    } else {
+      const { evaluateDecision } = require('../utils/decisionEngine');
+      const result = evaluateDecision(ndviDrop, fraudScore);
+      initialStatus = result.status;
+      reason = result.reason;
+    }
 
     const now = new Date().toISOString();
 
-    const claim = {
-      claimId,
-      farmerId,
-      farmerName: farmer?.name || 'Unknown Farmer',
-      farmId: farmId || 'NEW-REG',
-      damageType,
-      description,
-      images: images || [],
-      status: 'Pending',
+    const claimData = {
+      claimId, farmerId, farmerName: farmer?.name || 'Unknown Farmer',
+      farmId: farmId || 'NEW-REG', damageType, description, images: images || [],
+      status: initialStatus,
       claimAmount,
-      ndviAnalysis: {
-        ndviBefore,
-        ndviAfter,
-        ndviDrop,
-        damageLevel,
-      },
-      fraudAnalysis: {
-        fraudScore,
-        fraudRisk,
-        flags: farm?.alerts || (fraudScore > 40 ? ['Dynamic Registration Anomaly'] : []),
-      },
+      ndviAnalysis: { ndviBefore, ndviAfter, ndviDrop, damageLevel },
+      fraudAnalysis: { fraudScore, fraudRisk, flags: farm?.alerts || (fraudScore > 40 ? ['Dynamic Registration Anomaly'] : []) },
       explanation: {
-        ndviDrop,
-        damageLevel,
-        fraudRisk,
-        reason: 'Claim submitted via Mobile Portal. Processing dynamic registration verification.',
-        decision: 'Pending',
+        ndviDrop, damageLevel, fraudScore, fraudRisk,
+        reason: reason,
+        decision: initialStatus,
       },
       timeline: [
         { action: 'Claim Submitted', timestamp: now, detail: `Damage type: ${damageType}` },
         { action: 'Identity Verified', timestamp: now, detail: `Farmer: ${farmer?.name || 'Dynamic'}` },
         { action: 'Automated NDVI Check', timestamp: now, detail: `Estimated Drop: ${ndviDrop}%` },
       ],
-      createdAt: now,
-      updatedAt: now,
+      createdAt: now, updatedAt: now,
     };
 
-    this.claims.set(claimId, claim);
+    db.claims.push(claimData);
+    await dbManager.saveData();
 
-    // Link claim to farm
-    if (farm) {
-      if (!farm.claimIds) farm.claimIds = [];
-      farm.claimIds.push(claimId);
+    // Sync farm profile with the claim decision immediately
+    if (farmId) {
+      const farmDoc = await farmStore.findById(farmId);
+      if (farmDoc) {
+        await farmStore.updateById(farmId, { 
+          'explanation.decision': initialStatus,
+          'explanation.reason': reason
+        });
+      }
     }
 
-    // Push notification
-    this._pushNotification(farmerId, {
+    if (farm) {
+      await farmStore.updateById(farmId, { $addToSet: { claimIds: claimId } });
+    }
+
+    await this._pushNotification(farmerId, {
       type: 'claim_update',
       message: `Your claim ${claimId} has been submitted. Estimated amount: ₹${claimAmount.toLocaleString()}.`,
     });
 
-    // Log activity
     if (pushActivity) {
-      this.logActivity({
+      await this.logActivity({
         type: 'claim_submitted',
         desc: `New claim ${claimId} by ${farmer?.name || 'Farmer'} — ${damageType} (${damageLevel})`,
-        farmId: farmId || null,
-        farmerId,
+        farmId: farmId || null, farmerId,
       });
     }
 
-    return claim;
-  }
+    return claimData;
+  },
 
-  createClaim(input) {
-    // Validate no duplicate farmerId+farmId pending claim
-    const existing = this.getClaimsByFarmer(input.farmerId).find(
-      c => c.farmId === input.farmId && c.status === 'Pending'
-    );
-    if (existing) {
-      return { error: `A pending claim (${existing.claimId}) already exists for farm ${input.farmId}` };
-    }
+  async createClaim(input) {
+    const db = await dbManager.getData();
+    const existing = db.claims.find(c => c.farmerId === input.farmerId && c.farmId === input.farmId && c.status === 'Pending');
+    if (existing) return { error: `A pending claim (${existing.claimId}) already exists for farm ${input.farmId}` };
     return this._createClaimInternal(input, true);
-  }
+  },
 
-  updateClaimStatus(claimId, status) {
-    const claim = this.getClaim(claimId);
+  // Helper for seed scripts
+  async updateClaimStatusRaw(claimId, updates) {
+    const db = await dbManager.getData();
+    const claim = db.claims.find(c => c.claimId === claimId);
+    if (!claim) return;
+    
+    if (updates.status) claim.status = updates.status;
+    if (updates.processedAt) claim.processedAt = updates.processedAt;
+    if (updates['explanation.decision']) claim.explanation.decision = updates['explanation.decision'];
+    if (updates.newTimelineEvent) claim.timeline.push(updates.newTimelineEvent);
+    
+    await dbManager.saveData();
+
+    // Sync farm
+    if (claim.farmId) {
+      const farm = await farmStore.findById(claim.farmId);
+      if (farm && farm.explanation) {
+        farm.explanation.decision = claim.status;
+        await farmStore.updateById(claim.farmId, { explanation: farm.explanation });
+      }
+    }
+  },
+
+  async updateClaimStatus(claimId, status) {
+    const db = await dbManager.getData();
+    const claim = db.claims.find(c => c.claimId === claimId);
     if (!claim) return { error: `Claim ${claimId} not found` };
 
     const now = new Date().toISOString();
@@ -261,77 +304,86 @@ class AppStore {
     claim.processedAt = now;
     claim.updatedAt = now;
     claim.explanation.decision = status;
-    
+
     claim.timeline.push({
       action: `Claim ${status}`,
       timestamp: now,
       detail: `Status manually updated via Dashboard.`,
     });
 
-    // Notify farmer
-    this._pushNotification(claim.farmerId, {
+    await dbManager.saveData();
+
+    // Sync farm
+    if (claim.farmId) {
+      const farm = await farmStore.findById(claim.farmId);
+      if (farm && farm.explanation) {
+        farm.explanation.decision = status;
+        await farmStore.updateById(claim.farmId, { explanation: farm.explanation });
+      }
+    }
+
+    await this._pushNotification(claim.farmerId, {
       type: 'claim_update',
       message: `Your claim ${claimId} has been ${status}.`,
     });
 
     return claim;
-  }
+  },
 
-  getClaim(claimId) {
-    return this.claims.get(claimId) || null;
-  }
+  async getClaim(claimId) {
+    const db = await dbManager.getData();
+    return db.claims.find(c => c.claimId === claimId) || null;
+  },
 
-  getAllClaims() {
-    return Array.from(this.claims.values()).sort(
-      (a, b) => new Date(b.createdAt) - new Date(a.createdAt)
-    );
-  }
+  async getAllClaims() {
+    const db = await dbManager.getData();
+    return [...(db.claims || [])].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+  },
 
-  getClaimsByFarmer(farmerId) {
-    return Array.from(this.claims.values())
-      .filter(c => c.farmerId === farmerId)
-      .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-  }
+  async getClaimsByFarmer(farmerId) {
+    const db = await dbManager.getData();
+    return db.claims.filter(c => c.farmerId === farmerId).sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+  },
 
   // ═══════════════════════════════════════════════════════════════
   //  NOTIFICATION OPERATIONS
   // ═══════════════════════════════════════════════════════════════
 
-  _pushNotification(farmerId, { type, message }) {
+  async _pushNotification(farmerId, { type, message }) {
+    const db = await dbManager.getData();
     const notif = {
-      id: uuidv4(),
-      type,
-      message,
-      read: false,
+      notificationId: uuidv4(),
+      farmerId, type, message, read: false,
       timestamp: new Date().toISOString(),
     };
-    const inbox = this.notifications.get(farmerId) || [];
-    inbox.unshift(notif);
-    this.notifications.set(farmerId, inbox);
+    db.notifications.push(notif);
+    await dbManager.saveData();
     return notif;
-  }
+  },
 
-  getNotifications(farmerId) {
-    return this.notifications.get(farmerId) || [];
-  }
+  async getNotifications(farmerId) {
+    const db = await dbManager.getData();
+    return db.notifications.filter(n => n.farmerId === farmerId).sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+  },
 
-  createNotification(farmerId, { type, message }) {
+  async createNotification(farmerId, { type, message }) {
     return this._pushNotification(farmerId, { type: type || 'info', message });
-  }
+  },
 
   // ═══════════════════════════════════════════════════════════════
   //  WEATHER OPERATIONS
   // ═══════════════════════════════════════════════════════════════
 
-  getWeather(location) {
-    // Try exact match first, then partial
+  async getWeather(location) {
+    const db = await dbManager.getData();
     const key = (location || '').toLowerCase().trim();
-    if (this.weatherData.has(key)) return this.weatherData.get(key);
-    // Partial match
-    for (const [k, v] of this.weatherData.entries()) {
-      if (k.includes(key) || key.includes(k)) return v;
-    }
-    // Fallback — generate plausible data
+
+    let weather = db.weather.find(w => w.location === key);
+    if (weather) return weather;
+
+    weather = db.weather.find(w => w.location.includes(key) || key.includes(w.location));
+    if (weather) return weather;
+
     return {
       location: location,
       temperature: 30 + Math.floor(Math.random() * 12),
@@ -340,96 +392,67 @@ class AppStore {
       condition: 'Partly Cloudy',
       forecast: 'Data limited for this region',
     };
-  }
+  },
 
   // ═══════════════════════════════════════════════════════════════
   //  ACTIVITY LOG OPERATIONS
   // ═══════════════════════════════════════════════════════════════
 
-  logActivity({ type, desc, farmId, farmerId }) {
-    this.activities.unshift({
-      id: uuidv4(),
+  async logActivity({ type, desc, farmId, farmerId }) {
+    const db = await dbManager.getData();
+    db.activities.push({
+      activityId: uuidv4(),
       type: type || 'system',
-      desc,
-      farmId: farmId || null,
-      farmerId: farmerId || null,
+      desc, farmId: farmId || null, farmerId: farmerId || null,
       timestamp: new Date().toISOString(),
     });
-    // Keep capped at 500
-    if (this.activities.length > 500) this.activities.length = 500;
-  }
+    await dbManager.saveData();
+  },
 
-  getActivities(limit = 75) {
-    // Merge store activities with farm-level logs for a complete feed
+  async getActivities(limit = 75) {
+    const db = await dbManager.getData();
+    const storeActivities = [...(db.activities || [])];
+    const allFarms = await farmStore.findAll();
+    
     const claimEvents = [];
     const fraudAlerts = [];
     const ndviUpdates = [];
-    const allFarms = farmStore.findAll();
     let ndviIdx = 0;
 
     allFarms.forEach(f => {
       if (f.activityLogs) {
         f.activityLogs.forEach(log => {
-          claimEvents.push({
-            id: log.id,
-            type: 'claim event',
-            desc: log.action,
-            farmId: f.farmId,
-            timestamp: log.timestamp,
-          });
+          claimEvents.push({ id: log.id, type: 'claim event', desc: log.action, farmId: f.farmId, timestamp: log.timestamp });
         });
       }
       if (f.alerts && f.alerts.length > 0) {
-        fraudAlerts.push({
-          type: 'fraud alert',
-          desc: `High risk anomaly triggered: ${f.alerts[0]}`,
-          farmId: f.farmId,
-          timestamp: f.enrolledAt,
-        });
+        fraudAlerts.push({ type: 'fraud alert', desc: `High risk anomaly triggered: ${f.alerts[0]}`, farmId: f.farmId, timestamp: f.enrolledAt });
       }
       if (f.analytics && f.ndviDrop > 20) {
-        // Stagger timestamps so they don't all sort to the top
-        const offset = ndviIdx * 120000; // 2 minutes apart
-        ndviUpdates.push({
-          type: 'ndvi update',
-          desc: `NDVI scanned dropping by ${f.ndviDrop}%`,
-          farmId: f.farmId,
-          timestamp: new Date(Date.now() - offset).toISOString(),
-        });
+        const offset = ndviIdx * 120000;
+        ndviUpdates.push({ type: 'ndvi update', desc: `NDVI scanned dropping by ${f.ndviDrop}%`, farmId: f.farmId, timestamp: new Date(Date.now() - offset).toISOString() });
         ndviIdx++;
       }
     });
 
-    // Take proportional samples from each type to ensure diversity
     const maxPerType = Math.floor(limit / 4);
     const sampledClaims = claimEvents.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp)).slice(0, maxPerType);
     const sampledFraud = fraudAlerts.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp)).slice(0, maxPerType);
     const sampledNdvi = ndviUpdates.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp)).slice(0, maxPerType);
 
-    // AppStore activities (claim_submitted, etc.) always included first
-    const merged = [...this.activities, ...sampledClaims, ...sampledFraud, ...sampledNdvi];
-    return merged
-      .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp))
-      .slice(0, limit);
-  }
+    const merged = [...storeActivities, ...sampledClaims, ...sampledFraud, ...sampledNdvi];
+    return merged.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp)).slice(0, limit);
+  },
 
-  // ═══════════════════════════════════════════════════════════════
-  //  HISTORY (past claims for a farmer)
-  // ═══════════════════════════════════════════════════════════════
-
-  getHistory(farmerId) {
-    return this.getClaimsByFarmer(farmerId).map(c => ({
-      claimId: c.claimId,
-      farmId: c.farmId,
-      damageType: c.damageType,
-      claimAmount: c.claimAmount,
-      status: c.status,
+  async getHistory(farmerId) {
+    const claims = await this.getClaimsByFarmer(farmerId);
+    return claims.map(c => ({
+      claimId: c.claimId, farmId: c.farmId, damageType: c.damageType,
+      claimAmount: c.claimAmount, status: c.status,
       result: c.explanation?.decision || c.status,
-      createdAt: c.createdAt,
-      processedAt: c.processedAt || null,
+      createdAt: c.createdAt, processedAt: c.processedAt || null,
     }));
-  }
-}
+  },
+};
 
-// Singleton
-module.exports = new AppStore();
+module.exports = appStore;
