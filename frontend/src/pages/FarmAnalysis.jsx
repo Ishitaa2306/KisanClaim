@@ -159,19 +159,11 @@ export default function FarmAnalysis() {
   if (ndviDropPercent < 10) ndviStatusLabel = 'Minor Change';
   else if (ndviDropPercent > 30) ndviStatusLabel = 'Severe Damage';
 
-  // Strict Unsplash Agricultural Overrides
-  const VERIFIED_BEFORE_IMAGES = [
-    'https://images.unsplash.com/photo-1500382017468-9049fed747ef?w=800&q=80',
-    'https://images.unsplash.com/photo-1625246333195-78d9c38ad449?w=800&q=80'
-  ];
-  const VERIFIED_AFTER_IMAGES = [
-    'https://images.unsplash.com/photo-1583245553131-0e7d36409271?w=800&q=80',
-    'https://images.unsplash.com/photo-1547483238-f400e65ccd56?w=800&q=80'
-  ];
-  
-  const farmNumber = parseInt((farm?.farmId || 'KCF-0').split('-')[1] || '0', 10);
-  const strictBeforeImg = VERIFIED_BEFORE_IMAGES[farmNumber % VERIFIED_BEFORE_IMAGES.length];
-  const strictAfterImg = VERIFIED_AFTER_IMAGES[farmNumber % VERIFIED_AFTER_IMAGES.length];
+  // Local satellite/crop images for before/after comparison
+  const strictBeforeImg = new URL('../assets/images/before_healthy_crop.jpg', import.meta.url).href;
+  const strictAfterImg = isHighRisk
+    ? new URL('../assets/images/after_high_damage.jpg', import.meta.url).href
+    : new URL('../assets/images/after_moderate.jpg', import.meta.url).href;
 
   const handleDisburse = () => {
     // Pass farm data explicitly via state

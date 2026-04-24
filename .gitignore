@@ -5,3 +5,6 @@ dist/
 coverage/
 .DS_Store
 Thumbs.db
+temp_uploads/
+gee-service-account-key.json
+*-service-account-key.json

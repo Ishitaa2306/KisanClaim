@@ -11,6 +11,7 @@ const integrationRoutes = require('./integrationRoutes');
 const mobileRoutes = require('./mobileRoutes');
 const apiRoutes = require('./apiRoutes');
 const authRoutes = require('./authRoutes');
+const geeRoutes = require('./geeRoutes');
 const ApiResponse = require('../utils/ApiResponse');
 
 const router = Router();
@@ -36,6 +37,9 @@ router.use('/api', apiRoutes);
 
 // ── Auth API ───────────────────────────────────────────────────
 router.use('/api/auth', authRoutes);
+
+// ── GEE (Google Earth Engine) API ────────────────────────────
+router.use('/api/v1/gee', geeRoutes);
 
 module.exports = router;
 
