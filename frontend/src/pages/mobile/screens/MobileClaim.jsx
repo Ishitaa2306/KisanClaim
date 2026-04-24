@@ -3,9 +3,10 @@ import { useNavigate } from 'react-router-dom';
 import { 
   ChevronLeft, ImagePlus, AlertCircle, ShieldAlert, 
   CloudRain, Camera, FileText, CheckCircle2, Loader2,
-  AlertTriangle
+  AlertTriangle, Lightbulb
 } from 'lucide-react';
 import { useMobile } from '../context/MobileContext';
+import SmartVoiceInput from '../../../components/voice/SmartVoiceInput';
 
 const MobileClaim = () => {
   const { t, farmerId } = useMobile();
@@ -15,6 +16,7 @@ const MobileClaim = () => {
   const [data, setData] = useState(null);
   const [damageType, setDamageType] = useState('');
   const [description, setDescription] = useState('');
+  const [advisoryReport, setAdvisoryReport] = useState(null);
   const [submitting, setSubmitting] = useState(false);
   const [errorVisible, setErrorVisible] = useState(null);
   const [selectedFile, setSelectedFile] = useState(null);
@@ -174,6 +176,12 @@ const MobileClaim = () => {
           {/* Description */}
           <div className="space-y-3">
             <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1">{t('description_optional')}</label>
+            <SmartVoiceInput 
+              onResult={(text, analysis) => {
+                setDescription((prev) => prev ? prev + ' ' + text : text);
+                if (analysis) setAdvisoryReport(analysis);
+              }}
+            />
             <textarea 
               placeholder={t('desc_placeholder')}
               rows="4"
@@ -181,6 +189,25 @@ const MobileClaim = () => {
               value={description}
               onChange={(e) => setDescription(e.target.value)}
             />
+            {advisoryReport && (
+              <div className="bg-blue-50 border border-blue-100 rounded-2xl p-4 mt-2 animate-in fade-in zoom-in duration-300 shadow-sm">
+                <div className="flex items-center gap-2 mb-2">
+                  <Lightbulb className="w-4 h-4 text-blue-600" />
+                  <span className="text-[10px] font-bold text-blue-800 uppercase tracking-widest">Smart Advisory</span>
+                </div>
+                <div className="text-xs text-blue-900 space-y-1">
+                  <p><span className="font-bold">Core Issue:</span> {advisoryReport.problem}</p>
+                  <div className="mt-2 text-blue-800 font-medium">
+                    <p className="mb-1 text-[10px] uppercase font-bold tracking-wider text-blue-600">Suggested Action Plan:</p>
+                    <ul className="list-disc pl-4 space-y-1">
+                      {advisoryReport.solution.map((sol, idx) => (
+                        <li key={idx}>{sol}</li>
+                      ))}
+                    </ul>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Evidence Upload */}
