@@ -12,14 +12,15 @@ const MobileSettings = () => {
     { code: 'hi', label: 'हिंदी (Hindi)' },
     { code: 'mr', label: 'मराठी (Marathi)' },
     { code: 'ta', label: 'தமிழ் (Tamil)' },
-    { code: 'te', label: 'తెలుగు (Telugu)' }
+    { code: 'te', label: 'తెలుగు (Telugu)' },
+    { code: 'kn', label: 'ಕನ್ನಡ (Kannada)' }
   ];
 
   return (
     <div className="w-full">
       <div className="mb-6 pb-4 border-b border-gray-200">
-        <h1 className="text-2xl font-bold text-gray-900 leading-tight">Account Settings</h1>
-        <p className="text-sm text-gray-500 mt-1">Manage your preferences and language options.</p>
+        <h1 className="text-2xl font-bold text-gray-900 leading-tight">{t('account_settings')}</h1>
+        <p className="text-sm text-gray-500 mt-1">{t('account_settings_desc')}</p>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl">
@@ -32,7 +33,7 @@ const MobileSettings = () => {
             </div>
             <div className="p-6">
               <p className="text-xl font-bold text-gray-900 font-mono">{farmerId}</p>
-              <p className="text-sm text-gray-500 mt-1">Account: {farmerName || 'Authenticated'}</p>
+              <p className="text-sm text-gray-500 mt-1">{t('account_label')}: {farmerName || 'Authenticated'}</p>
               
               <button 
                 onClick={() => {

@@ -94,8 +94,8 @@ const MobileClaim = () => {
   return (
     <div className="w-full">
       <div className="mb-6 pb-4 border-b border-gray-200">
-        <h1 className="text-2xl font-bold text-gray-900 leading-tight">File Crop Claim</h1>
-        <p className="text-sm text-gray-500 mt-1">Submit a new damage report for your primary farm.</p>
+        <h1 className="text-2xl font-bold text-gray-900 leading-tight" data-i18n="file_crop_claim">{t('file_crop_claim')}</h1>
+        <p className="text-sm text-gray-500 mt-1" data-i18n="file_claim_desc">{t('file_claim_desc')}</p>
       </div>
 
       <div className="max-w-2xl bg-white rounded-lg shadow-sm border border-gray-200 p-6">
@@ -112,7 +112,8 @@ const MobileClaim = () => {
             <label className="block text-sm font-semibold text-gray-800 mb-2">{t('damage_type')}</label>
             <input 
               type="text" 
-              placeholder="e.g. Drought, Hailstorm, Pest Attack"
+              placeholder={t('damage_type_placeholder')}
+              data-i18n-placeholder="damage_type_placeholder"
               className="w-full bg-white border border-gray-300 rounded-md py-2 px-3 text-sm text-gray-900 outline-none focus:border-green-500 focus:ring-1 focus:ring-green-500 transition-shadow"
               value={damageType}
               onChange={(e) => setDamageType(e.target.value)}
@@ -122,7 +123,8 @@ const MobileClaim = () => {
           <div>
             <label className="block text-sm font-semibold text-gray-800 mb-2">{t('description')} (Optional)</label>
             <textarea 
-              placeholder="Briefly describe the extent of the damage..."
+              placeholder={t('description_placeholder')}
+              data-i18n-placeholder="description_placeholder"
               rows="4"
               className="w-full bg-white border border-gray-300 rounded-md py-2 px-3 text-sm text-gray-900 outline-none focus:border-green-500 focus:ring-1 focus:ring-green-500 transition-shadow resize-y"
               value={description}
@@ -149,15 +151,15 @@ const MobileClaim = () => {
                   <div className="w-24 h-24 rounded-lg overflow-hidden mb-2 border border-green-200">
                     <img src={previewUrl} alt="Preview" className="w-full h-full object-cover" />
                   </div>
-                  <span className="text-xs font-bold text-green-700 uppercase tracking-wider">Image Selected ✓</span>
+                  <span className="text-xs font-bold text-green-700 uppercase tracking-wider" data-i18n="image_selected">{t('image_selected')}</span>
                 </div>
               ) : (
                 <>
                   <div className="p-3 bg-white rounded-full shadow-sm mb-3 group-hover:scale-105 transition-transform">
                     <ImagePlus className="text-gray-500" size={24} />
                   </div>
-                  <span className="text-sm text-gray-600 font-medium">Click to upload satellite or field imagery</span>
-                  <span className="text-xs text-gray-400 mt-1">PNG, JPG, up to 10MB</span>
+                  <span className="text-sm text-gray-600 font-medium" data-i18n="click_to_upload">{t('click_to_upload')}</span>
+                  <span className="text-xs text-gray-400 mt-1" data-i18n="upload_limits">{t('upload_limits')}</span>
                 </>
               )}
             </button>
@@ -169,7 +171,7 @@ const MobileClaim = () => {
               onClick={() => navigate('/mobile/home')}
               className="px-5 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
             >
-              Cancel
+              <span data-i18n="cancel">{t('cancel')}</span>
             </button>
             <button 
               type="submit"

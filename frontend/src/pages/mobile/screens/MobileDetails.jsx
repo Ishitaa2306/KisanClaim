@@ -45,8 +45,8 @@ const MobileDetails = () => {
           <ChevronLeft size={20} />
         </button>
         <div>
-          <h1 className="text-2xl font-bold text-gray-900 leading-tight">Claim #{claim.claimId}</h1>
-          <p className="text-sm text-gray-500 mt-1">Detailed status and intelligence report.</p>
+          <h1 className="text-2xl font-bold text-gray-900 leading-tight"><span data-i18n="claim_number">{t('claim_number')}</span> {claim.claimId}</h1>
+          <p className="text-sm text-gray-500 mt-1" data-i18n="detailed_status_desc">{t('detailed_status_desc')}</p>
         </div>
       </div>
 
@@ -59,7 +59,7 @@ const MobileDetails = () => {
           <div className="bg-white rounded-lg shadow-sm border border-gray-200">
             <div className="p-4 border-b border-gray-100 bg-gray-50/50 rounded-t-lg flex items-center gap-2">
               <FileText size={18} className="text-gray-500" />
-              <h2 className="text-sm font-semibold text-gray-800 uppercase tracking-wider">Overview</h2>
+              <h2 className="text-sm font-semibold text-gray-800 uppercase tracking-wider" data-i18n="overview">{t('overview')}</h2>
             </div>
             <div className="p-0">
               <table className="w-full text-sm">
@@ -70,14 +70,14 @@ const MobileDetails = () => {
                       <span className={`px-2.5 py-0.5 rounded text-xs font-semibold uppercase ring-1 
                         ${claim.status === 'Pending' ? 'bg-yellow-50 text-yellow-700 ring-yellow-600/20' : 
                           claim.status === 'Approved' ? 'bg-green-50 text-green-700 ring-green-600/20' : 
-                          'bg-red-50 text-red-700 ring-red-600/20'}`}>
-                        {claim.status}
+                          'bg-red-50 text-red-700 ring-red-600/20'}`} data-i18n={claim.status?.toLowerCase()}>
+                        {t(claim.status?.toLowerCase() || claim.status)}
                       </span>
                     </td>
                   </tr>
                   <tr className="border-b border-gray-100 last:border-0 hover:bg-gray-50/50">
                     <td className="py-3 px-4 text-gray-500 font-medium">{t('damage_type')}</td>
-                    <td className="py-3 px-4 text-right font-medium text-gray-900">{claim.damageType}</td>
+                    <td className="py-3 px-4 text-right font-medium text-gray-900" data-i18n={claim.damageType?.toLowerCase().replace(' ', '_')}>{t(claim.damageType?.toLowerCase().replace(' ', '_') || claim.damageType)}</td>
                   </tr>
                   <tr className="border-b border-gray-100 last:border-0 hover:bg-gray-50/50">
                     <td className="py-3 px-4 text-gray-500 font-medium">{t('claim_amount')}</td>
@@ -93,7 +93,7 @@ const MobileDetails = () => {
             <div className="bg-white rounded-lg shadow-sm border border-gray-200">
               <div className="p-4 border-b border-gray-100 bg-gray-50/50 rounded-t-lg flex items-center gap-2">
                 <BarChart2 size={18} className="text-gray-500" />
-                <h2 className="text-sm font-semibold text-gray-800 uppercase tracking-wider">Intelligence Analysis</h2>
+                <h2 className="text-sm font-semibold text-gray-800 uppercase tracking-wider" data-i18n="intelligence_analysis">{t('intelligence_analysis')}</h2>
               </div>
               <div className="p-4 space-y-4">
                 <div className="flex gap-4">
@@ -130,7 +130,7 @@ const MobileDetails = () => {
                   {claim.timeline.map((item, idx) => (
                     <div key={idx} className="relative">
                       <div className="absolute -left-[31px] top-1 w-3 h-3 rounded-full bg-green-500 ring-4 ring-white"></div>
-                      <p className="font-semibold text-sm text-gray-900 mb-0.5">{item.action}</p>
+                      <p className="font-semibold text-sm text-gray-900 mb-0.5" data-i18n={item.action?.toLowerCase().replace(/\s+/g, '_')}>{t(item.action?.toLowerCase().replace(/\s+/g, '_') || item.action)}</p>
                       <p className="text-xs text-gray-600 mb-1 leading-snug">{item.detail}</p>
                       <p className="text-[10px] text-gray-400 font-mono font-medium">{new Date(item.timestamp).toLocaleString()}</p>
                     </div>

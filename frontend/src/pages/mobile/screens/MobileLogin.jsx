@@ -5,7 +5,7 @@ import { useMobile } from '../context/MobileContext';
 
 const MobileLogin = () => {
   const navigate = useNavigate();
-  const { loginSession } = useMobile();
+  const { loginSession, t } = useMobile();
   
   const [step, setStep] = useState(1);
   const [name, setName] = useState('Manoj Rajput');
@@ -82,8 +82,8 @@ const MobileLogin = () => {
           <div className="w-16 h-16 bg-green-100/50 rounded-full flex items-center justify-center mx-auto mb-4 border border-green-200">
             <ShieldCheck size={32} className="text-green-600" />
           </div>
-          <h1 className="text-2xl font-bold text-gray-900 tracking-tight">KisanClaim Portal</h1>
-          <p className="text-sm text-gray-500 mt-2">PMFBY Farmer Verification System</p>
+          <h1 className="text-2xl font-bold text-gray-900 tracking-tight" data-i18n="login_title">{t('login_title')}</h1>
+          <p className="text-sm text-gray-500 mt-2" data-i18n="login_subtitle">{t('login_subtitle')}</p>
         </div>
 
         <div className="p-8">
@@ -97,7 +97,7 @@ const MobileLogin = () => {
           {step === 1 ? (
             <form onSubmit={handleSendOtp} className="space-y-5">
               <div>
-                <label className="block text-sm font-semibold text-gray-800 mb-2">Registered Full Name</label>
+                <label className="block text-sm font-semibold text-gray-800 mb-2" data-i18n="fullname_label">{t('fullname_label')}</label>
                 <input 
                   type="text" 
                   className="w-full bg-white border border-gray-300 rounded-md py-2.5 px-3 text-sm text-gray-900 outline-none focus:border-green-500 focus:ring-1 focus:ring-green-500 transition-shadow"
@@ -107,7 +107,7 @@ const MobileLogin = () => {
                 />
               </div>
               <div>
-                <label className="block text-sm font-semibold text-gray-800 mb-2">Aadhaar Linked Phone Number</label>
+                <label className="block text-sm font-semibold text-gray-800 mb-2" data-i18n="phone_label">{t('phone_label')}</label>
                 <input 
                   type="text" 
                   maxLength={10}
@@ -122,20 +122,20 @@ const MobileLogin = () => {
                 disabled={loading}
                 className="w-full mt-4 py-3 bg-green-600 text-white font-semibold rounded-md shadow-sm hover:bg-green-700 transition disabled:opacity-70 disabled:cursor-not-allowed flex items-center justify-center"
               >
-                {loading ? <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div> : 'Send Validation OTP'}
+                {loading ? <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div> : <span data-i18n="send_otp_btn">{t('send_otp_btn')}</span>}
               </button>
               
               <div className="mt-6 text-center text-xs text-gray-400">
-                <p>For Demo: Pre-filled with Manoj Rajput</p>
+                <p data-i18n="demo_prefill">{t('demo_prefill')}</p>
               </div>
             </form>
           ) : (
             <form onSubmit={handleVerifyOtp} className="space-y-5 flex flex-col items-center">
-              <p className="text-sm text-gray-600 text-center mb-2">We sent a verification code to <br/><span className="font-bold text-gray-900">+91 {phone}</span></p>
+              <p className="text-sm text-gray-600 text-center mb-2"><span data-i18n="sms_sent_to">{t('sms_sent_to')}</span> <br/><span className="font-bold text-gray-900">+91 {phone}</span></p>
               
               {demoOtpBox && (
                 <div className="w-full bg-yellow-50 border border-yellow-200 rounded p-3 mb-2 text-center shadow-sm">
-                  <p className="text-xs text-yellow-800 uppercase font-bold tracking-wider mb-1">Demo SMS Received</p>
+                  <p className="text-xs text-yellow-800 uppercase font-bold tracking-wider mb-1" data-i18n="demo_sms_received">{t('demo_sms_received')}</p>
                   <p className="text-xl font-mono text-yellow-900 tracking-widest">{demoOtpBox}</p>
                 </div>
               )}
@@ -156,15 +156,16 @@ const MobileLogin = () => {
                 disabled={loading || otp.length < 6}
                 className="w-full mt-4 py-3 bg-green-600 text-white font-semibold rounded-md shadow-sm hover:bg-green-700 transition disabled:opacity-70 disabled:cursor-not-allowed flex items-center justify-center"
               >
-                {loading ? <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div> : 'Verify & Login'}
+                {loading ? <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div> : <span data-i18n="verify_login_btn">{t('verify_login_btn')}</span>}
               </button>
               
               <button
                 type="button"
                 onClick={() => setStep(1)}
                 className="mt-4 text-sm font-medium text-green-600 hover:text-green-800 transition"
+                data-i18n="back_to_login"
               >
-                ← Back to Login
+                {t('back_to_login')}
               </button>
             </form>
           )}

@@ -48,8 +48,8 @@ const MobileNotifications = () => {
           <ChevronLeft size={20} />
         </button>
         <div>
-          <h1 className="text-2xl font-bold text-gray-900 leading-tight">Notifications</h1>
-          <p className="text-sm text-gray-500 mt-1">System alerts and claim updates.</p>
+          <h1 className="text-2xl font-bold text-gray-900 leading-tight" data-i18n="notifications">{t('notifications')}</h1>
+          <p className="text-sm text-gray-500 mt-1" data-i18n="notifications_desc">{t('notifications_desc')}</p>
         </div>
       </div>
 

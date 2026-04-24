@@ -61,7 +61,7 @@ const MobileWeather = () => {
           <ChevronLeft size={20} />
         </button>
         <div>
-          <h1 className="text-2xl font-bold text-gray-900 leading-tight">Regional Weather</h1>
+          <h1 className="text-2xl font-bold text-gray-900 leading-tight" data-i18n="regional_weather">{t('regional_weather')}</h1>
           <p className="text-sm text-gray-500 mt-1">{location}</p>
         </div>
       </div>
@@ -89,7 +89,7 @@ const MobileWeather = () => {
         </div>
         
         <div className="mt-6 bg-gray-50 rounded-lg p-3 border border-gray-100 text-center">
-          <p className="text-sm text-gray-900 font-medium">Condition: <span className="font-bold text-green-700">{data.condition}</span></p>
+          <p className="text-sm text-gray-900 font-medium"><span data-i18n="condition">{t('condition')}</span>: <span className="font-bold text-green-700" data-i18n={data.condition?.toLowerCase()}>{t(data.condition?.toLowerCase() || data.condition)}</span></p>
           <p className="text-[11px] text-gray-500 italic mt-0.5">{data.forecast}</p>
         </div>
       </div>
@@ -98,7 +98,7 @@ const MobileWeather = () => {
       <div className="space-y-4">
         <div className="flex items-center gap-2 px-1">
           <Zap size={18} className="text-amber-500" />
-          <h2 className="text-sm font-bold text-gray-800 uppercase tracking-wider">Crop Risk Analysis</h2>
+          <h2 className="text-sm font-bold text-gray-800 uppercase tracking-wider" data-i18n="crop_risk_analysis">{t('crop_risk_analysis')}</h2>
         </div>
 
         {analysis ? (
@@ -108,13 +108,14 @@ const MobileWeather = () => {
             
             <div className="flex justify-between items-start">
               <div>
-                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Event Detected</p>
-                <h3 className="text-lg font-black text-gray-900 leading-tight uppercase tracking-tight">{analysis.weather?.eventType}</h3>
+                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1" data-i18n="event_detected">{t('event_detected')}</p>
+                <h3 className="text-lg font-black text-gray-900 leading-tight uppercase tracking-tight" data-i18n={analysis.weather?.eventType?.toLowerCase().replace(' ', '_')}>{t(analysis.weather?.eventType?.toLowerCase().replace(' ', '_') || analysis.weather?.eventType)}</h3>
               </div>
               <span className={`px-2.5 py-1 rounded text-[10px] font-black uppercase tracking-widest
                 ${analysis.weather?.severity === 'Critical' || analysis.weather?.severity === 'High' ? 'bg-red-600 text-white' : 
-                  analysis.weather?.severity === 'Medium' ? 'bg-amber-500 text-white' : 'bg-green-600 text-white'}`}>
-                {analysis.weather?.severity} Risk
+                  analysis.weather?.severity === 'Medium' ? 'bg-amber-500 text-white' : 'bg-green-600 text-white'}`}
+                  data-i18n={analysis.weather?.severity?.toLowerCase()}>
+                {t(analysis.weather?.severity?.toLowerCase() || analysis.weather?.severity)} Risk
               </span>
             </div>
 
@@ -122,14 +123,14 @@ const MobileWeather = () => {
                <div className="bg-white/80 rounded-lg p-3 border border-gray-100/50">
                   <div className="flex items-center gap-1.5 mb-1.5">
                     <Calendar size={12} className="text-gray-400" />
-                    <span className="text-[9px] font-bold text-gray-500 uppercase">Detection Date</span>
+                    <span className="text-[9px] font-bold text-gray-500 uppercase" data-i18n="detection_date">{t('detection_date')}</span>
                   </div>
                   <p className="text-xs font-bold text-gray-900">{analysis.weather?.eventDate}</p>
                </div>
                <div className="bg-white/80 rounded-lg p-3 border border-gray-100/50">
                   <div className="flex items-center gap-1.5 mb-1.5">
                     <Zap size={12} className="text-gray-400" />
-                    <span className="text-[9px] font-bold text-gray-500 uppercase">Damage Est.</span>
+                    <span className="text-[9px] font-bold text-gray-500 uppercase" data-i18n="damage_est">{t('damage_est')}</span>
                   </div>
                   <p className="text-xs font-bold text-red-600">{analysis.ndvi?.damagePercentage}%</p>
                </div>
@@ -137,16 +138,16 @@ const MobileWeather = () => {
 
             <div className="pt-2 border-t border-gray-200/50">
                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2 flex items-center gap-1.5">
-                 <Activity size={12} /> Analysis Window
+                 <Activity size={12} /> <span data-i18n="analysis_window">{t('analysis_window')}</span>
                </p>
                <div className="flex items-center gap-2">
                   <div className="flex-1 bg-white/60 p-2 rounded border border-gray-100 flex justify-between items-center">
-                    <span className="text-[8px] font-bold text-gray-400">BEFORE</span>
+                    <span className="text-[8px] font-bold text-gray-400" data-i18n="before_label">{t('before_label')}</span>
                     <span className="text-[10px] font-mono font-bold text-gray-900">{analysis.analysisWindow?.beforeDate}</span>
                   </div>
                   <div className="w-2 h-px bg-gray-300"></div>
                   <div className="flex-1 bg-white/60 p-2 rounded border border-gray-100 flex justify-between items-center">
-                    <span className="text-[8px] font-bold text-gray-400">AFTER</span>
+                    <span className="text-[8px] font-bold text-gray-400" data-i18n="after_label">{t('after_label')}</span>
                     <span className="text-[10px] font-mono font-bold text-gray-900">{analysis.analysisWindow?.afterDate}</span>
                   </div>
                </div>
@@ -155,8 +156,8 @@ const MobileWeather = () => {
         ) : (
           <div className="bg-white rounded-xl border border-dashed border-gray-300 p-8 flex flex-col items-center justify-center text-center">
             <AlertTriangle className="text-gray-300 mb-2" size={24} />
-            <p className="text-xs font-medium text-gray-500">No specific farm context found.</p>
-            <p className="text-[10px] text-gray-400 mt-1">Select a farm to view automated risk analysis.</p>
+            <p className="text-xs font-medium text-gray-500" data-i18n="no_farm_context">{t('no_farm_context')}</p>
+            <p className="text-[10px] text-gray-400 mt-1" data-i18n="select_farm_desc">{t('select_farm_desc')}</p>
           </div>
         )}
       </div>

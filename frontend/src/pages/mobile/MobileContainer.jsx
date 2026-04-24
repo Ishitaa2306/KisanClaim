@@ -64,8 +64,8 @@ const SidebarNav = () => {
         <div className="bg-gray-50 rounded-lg p-3 flex items-center gap-3 overflow-hidden cursor-pointer hover:bg-gray-100 transition" onClick={() => navigate('/mobile/settings')}>
           <div className="w-8 h-8 rounded-full bg-green-100 flex items-center justify-center text-green-700 font-bold shrink-0">{farmerName.charAt(0) || 'F'}</div>
           <div className="min-w-0">
-            <p className="text-xs font-bold text-gray-900 truncate">{farmerName || 'Farmer Portal'}</p>
-            <p className="text-[10px] text-gray-500 truncate">Authenticated</p>
+            <p className="text-xs font-bold text-gray-900 truncate">{farmerName || t('farmer_portal')}</p>
+            <p className="text-[10px] text-gray-500 truncate" data-i18n="authenticated">{t('authenticated')}</p>
           </div>
         </div>
       </div>

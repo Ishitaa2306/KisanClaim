@@ -54,8 +54,8 @@ const MobileHome = () => {
   return (
     <div className="w-full">
       <div className="mb-8">
-        <h1 className="text-2xl font-bold text-gray-900 leading-tight">Dashboard Overview</h1>
-        <p className="text-gray-500 text-sm mt-1">Hello, {data.name}</p>
+        <h1 className="text-2xl font-bold text-gray-900 leading-tight" data-i18n="dashboard_overview">{t('dashboard_overview')}</h1>
+        <p className="text-gray-500 text-sm mt-1"><span data-i18n="hello">{t('hello')}</span>, {data.name}</p>
       </div>
 
       {primaryFarm && (
@@ -71,16 +71,17 @@ const MobileHome = () => {
               <p className="text-sm text-gray-900 font-medium">{primaryFarm.location.district}</p>
             </div>
             <div>
-              <p className="text-xs text-gray-500 mb-1 font-medium select-none">{t('farm_area')}</p>
-              <p className="text-sm text-gray-900 font-medium">{primaryFarm.areaAcres} Acres</p>
+              <p className="text-xs text-gray-500 mb-1 font-medium select-none" data-i18n="farm_area">{t('farm_area')}</p>
+              <p className="text-sm text-gray-900 font-medium">{primaryFarm.areaAcres} <span data-i18n="acres">{t('acres')}</span></p>
             </div>
             <div className="ml-auto flex items-center gap-3">
               <span className="text-xs text-gray-500 font-medium">{t('health_indicator')}</span>
               <span className={`px-2.5 py-0.5 rounded text-xs font-semibold uppercase ring-1
                 ${primaryFarm.riskLevel === 'low' ? 'bg-green-50 text-green-700 ring-green-600/20' :
                   primaryFarm.riskLevel === 'high' || primaryFarm.riskLevel === 'critical' ? 'bg-red-50 text-red-700 ring-red-600/20' :
-                  'bg-yellow-50 text-yellow-700 ring-yellow-600/20'}`}>
-                {primaryFarm.riskLevel}
+                  'bg-yellow-50 text-yellow-700 ring-yellow-600/20'}`}
+                data-i18n={primaryFarm.riskLevel?.toLowerCase()}>
+                {t(primaryFarm.riskLevel?.toLowerCase() || primaryFarm.riskLevel)}
               </span>
             </div>
           </div>
@@ -94,9 +95,10 @@ const MobileHome = () => {
             <p className="text-sm text-gray-500 font-mono">{data.activeClaims[0].claimId}</p>
           </div>
           <div className="flex items-center gap-2">
-            <span className="text-xs text-gray-500 font-medium">{t('status')}</span>
-            <span className="text-xs font-semibold px-2.5 py-0.5 bg-yellow-50 text-yellow-700 ring-1 ring-yellow-600/20 rounded uppercase">
-              {data.activeClaims[0].status}
+            <span className="text-xs text-gray-500 font-medium" data-i18n="status">{t('status')}</span>
+            <span className="text-xs font-semibold px-2.5 py-0.5 bg-yellow-50 text-yellow-700 ring-1 ring-yellow-600/20 rounded uppercase"
+              data-i18n={data.activeClaims[0].status?.toLowerCase()}>
+              {t(data.activeClaims[0].status?.toLowerCase() || data.activeClaims[0].status)}
             </span>
           </div>
         </div>
@@ -110,8 +112,8 @@ const MobileHome = () => {
             <FileText className="text-green-600" size={20} />
           </div>
           <div>
-            <span className="block text-sm font-semibold text-gray-900">{t('file_claim')}</span>
-            <span className="block text-xs text-gray-500 mt-0.5 whitespace-nowrap">Report crop damage</span>
+            <span className="block text-sm font-semibold text-gray-900" data-i18n="file_claim">{t('file_claim')}</span>
+            <span className="block text-xs text-gray-500 mt-0.5 whitespace-nowrap" data-i18n="report_damage_desc">{t('report_damage_desc')}</span>
           </div>
         </button>
 
@@ -120,8 +122,8 @@ const MobileHome = () => {
             <Activity className="text-green-600" size={20} />
           </div>
           <div>
-            <span className="block text-sm font-semibold text-gray-900">{t('view_status')}</span>
-            <span className="block text-xs text-gray-500 mt-0.5 whitespace-nowrap">Track existing claims</span>
+            <span className="block text-sm font-semibold text-gray-900" data-i18n="view_status">{t('view_status')}</span>
+            <span className="block text-xs text-gray-500 mt-0.5 whitespace-nowrap" data-i18n="track_claims_desc">{t('track_claims_desc')}</span>
           </div>
         </button>
 
@@ -130,8 +132,8 @@ const MobileHome = () => {
             <LayoutGrid className="text-green-600" size={20} />
           </div>
           <div>
-            <span className="block text-sm font-semibold text-gray-900">{t('farm')}</span>
-            <span className="block text-xs text-gray-500 mt-0.5 whitespace-nowrap">View farm metrics</span>
+            <span className="block text-sm font-semibold text-gray-900" data-i18n="farm">{t('farm')}</span>
+            <span className="block text-xs text-gray-500 mt-0.5 whitespace-nowrap" data-i18n="view_metrics_desc">{t('view_metrics_desc')}</span>
           </div>
         </button>
 
@@ -144,8 +146,8 @@ const MobileHome = () => {
             <CloudRain className="text-green-600" size={20} />
           </div>
           <div>
-            <span className="block text-sm font-semibold text-gray-900">{t('weather')}</span>
-            <span className="block text-xs text-gray-500 mt-0.5 whitespace-nowrap">Local forecasts</span>
+            <span className="block text-sm font-semibold text-gray-900" data-i18n="weather">{t('weather')}</span>
+            <span className="block text-xs text-gray-500 mt-0.5 whitespace-nowrap" data-i18n="local_forecasts_desc">{t('local_forecasts_desc')}</span>
           </div>
         </button>
 

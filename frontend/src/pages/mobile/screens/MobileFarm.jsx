@@ -48,11 +48,11 @@ const MobileFarm = () => {
     <div className="w-full">
       <div className="mb-6 pb-4 border-b border-gray-200 flex justify-between items-end">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900 leading-tight">Farm Intelligence</h1>
-          <p className="text-sm text-gray-500 mt-1">ID: {data.farmId}</p>
+          <h1 className="text-2xl font-bold text-gray-900 leading-tight" data-i18n="farm_intelligence">{t('farm_intelligence')}</h1>
+          <p className="text-sm text-gray-500 mt-1"><span data-i18n="id_label">{t('id_label')}</span>: {data.farmId}</p>
         </div>
-        <span className={`px-3 py-1 rounded text-xs font-semibold uppercase ring-1 ${severityClass}`}>
-          {data.severity} Risk
+        <span className={`px-3 py-1 rounded text-xs font-semibold uppercase ring-1 ${severityClass}`} data-i18n={data.severity?.toLowerCase()}>
+          {t(data.severity?.toLowerCase() || data.severity)} Risk
         </span>
       </div>
       
@@ -60,7 +60,7 @@ const MobileFarm = () => {
         
         <div className="bg-white rounded-lg shadow-sm border border-gray-200">
           <div className="p-4 border-b border-gray-100 bg-gray-50/50 rounded-t-lg">
-            <h2 className="text-sm font-semibold text-gray-800 uppercase tracking-wider">Demographics</h2>
+            <h2 className="text-sm font-semibold text-gray-800 uppercase tracking-wider" data-i18n="demographics">{t('demographics')}</h2>
           </div>
           <div className="p-0">
             <table className="w-full text-sm">
@@ -84,7 +84,7 @@ const MobileFarm = () => {
 
         <div className="bg-white rounded-lg shadow-sm border border-gray-200">
           <div className="p-4 border-b border-gray-100 bg-gray-50/50 rounded-t-lg">
-            <h2 className="text-sm font-semibold text-gray-800 uppercase tracking-wider">Satellite Analysis</h2>
+            <h2 className="text-sm font-semibold text-gray-800 uppercase tracking-wider" data-i18n="satellite_analysis">{t('satellite_analysis')}</h2>
           </div>
           <div className="p-0">
             <table className="w-full text-sm">
@@ -94,11 +94,11 @@ const MobileFarm = () => {
                   <td className="py-3 px-4 text-gray-900 text-right font-mono">{data.ndviBefore} / {data.ndviAfter}</td>
                 </tr>
                 <tr className="border-b border-gray-100 last:border-0 hover:bg-gray-50/50">
-                  <td className="py-3 px-4 text-gray-500 font-medium">{t('damage_percent')}</td>
-                  <td className="py-3 px-4 font-bold text-right text-red-600">{data.damagePercentage}% Drop</td>
+                  <td className="py-3 px-4 text-gray-500 font-medium" data-i18n="damage_percent">{t('damage_percent')}</td>
+                  <td className="py-3 px-4 font-bold text-right text-red-600">{data.damagePercentage}% <span data-i18n="drop">{t('drop')}</span></td>
                 </tr>
                 <tr className="border-b border-gray-100 last:border-0 hover:bg-gray-50/50">
-                  <td className="py-3 px-4 text-gray-500 font-medium whitespace-nowrap">Insured Value</td>
+                  <td className="py-3 px-4 text-gray-500 font-medium whitespace-nowrap" data-i18n="insured_value">{t('insured_value')}</td>
                   <td className="py-3 px-4 text-gray-900 text-right font-mono">₹{data.insuredAmount?.toLocaleString()}</td>
                 </tr>
               </tbody>

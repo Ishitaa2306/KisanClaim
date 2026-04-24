@@ -43,8 +43,8 @@ const MobileStatus = () => {
   return (
     <div className="w-full">
       <div className="mb-6 pb-4 border-b border-gray-200">
-        <h1 className="text-2xl font-bold text-gray-900 leading-tight">Claim Activity</h1>
-        <p className="text-sm text-gray-500 mt-1">Track the processing status of your submitted claims.</p>
+        <h1 className="text-2xl font-bold text-gray-900 leading-tight" data-i18n="claim_activity">{t('claim_activity')}</h1>
+        <p className="text-sm text-gray-500 mt-1" data-i18n="claim_activity_desc">{t('claim_activity_desc')}</p>
       </div>
 
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
@@ -55,12 +55,12 @@ const MobileStatus = () => {
             <table className="w-full text-left text-sm whitespace-nowrap">
               <thead className="bg-gray-50/50 border-b border-gray-200 uppercase text-xs font-semibold text-gray-600 tracking-wider">
                 <tr>
-                  <th className="px-6 py-3">Claim ID</th>
-                  <th className="px-6 py-3">{t('damage_type')}</th>
-                  <th className="px-6 py-3">{t('claim_amount')}</th>
-                  <th className="px-6 py-3">Date</th>
-                  <th className="px-6 py-3">{t('status')}</th>
-                  <th className="px-6 py-3 text-right">Action</th>
+                  <th className="px-6 py-3" data-i18n="claim_id">{t('claim_id')}</th>
+                  <th className="px-6 py-3" data-i18n="damage_type">{t('damage_type')}</th>
+                  <th className="px-6 py-3" data-i18n="claim_amount">{t('claim_amount')}</th>
+                  <th className="px-6 py-3" data-i18n="date">{t('date')}</th>
+                  <th className="px-6 py-3" data-i18n="status">{t('status')}</th>
+                  <th className="px-6 py-3 text-right" data-i18n="action">{t('action')}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100">
@@ -71,12 +71,14 @@ const MobileStatus = () => {
                     className="hover:bg-gray-50 cursor-pointer transition-colors"
                   >
                     <td className="px-6 py-4 font-mono font-medium text-gray-900">{item.claimId}</td>
-                    <td className="px-6 py-4 text-gray-700">{item.damageType}</td>
+                    <td className="px-6 py-4 text-gray-700" data-i18n={item.damageType?.toLowerCase().replace(' ', '_')}>
+                      {t(item.damageType?.toLowerCase().replace(' ', '_') || item.damageType)}
+                    </td>
                     <td className="px-6 py-4 text-green-600 font-medium">₹{item.claimAmount?.toLocaleString()}</td>
                     <td className="px-6 py-4 text-gray-500">{new Date(item.createdAt).toLocaleDateString()}</td>
                     <td className="px-6 py-4">
-                      <span className={`px-2.5 py-0.5 rounded text-xs font-semibold uppercase ring-1 ${getStatusBadge(item.status)}`}>
-                        {item.status}
+                      <span className={`px-2.5 py-0.5 rounded text-xs font-semibold uppercase ring-1 ${getStatusBadge(item.status)}`} data-i18n={item.status?.toLowerCase()}>
+                        {t(item.status?.toLowerCase() || item.status)}
                       </span>
                     </td>
                     <td className="px-6 py-4 text-right">

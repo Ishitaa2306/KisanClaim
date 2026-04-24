@@ -16,6 +16,23 @@ export const MobileProvider = ({ children }) => {
   const changeLang = (newLang) => {
     setLang(newLang);
     localStorage.setItem('mobile_lang', newLang);
+
+    setTimeout(() => {
+      document.querySelectorAll('[data-i18n]').forEach(el => {
+        const key = el.getAttribute('data-i18n');
+        if (key) {
+          const section = translations[newLang] || translations['en'];
+          el.textContent = section[key] || translations['en'][key] || key;
+        }
+      });
+      document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
+        const key = el.getAttribute('data-i18n-placeholder');
+        if (key) {
+          const section = translations[newLang] || translations['en'];
+          el.setAttribute('placeholder', section[key] || translations['en'][key] || key);
+        }
+      });
+    }, 0);
   };
 
   const loginSession = (id, name) => {
