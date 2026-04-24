@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
-import { ChevronLeft, CloudRain, Thermometer, Droplets, Zap, Calendar, AlertTriangle, Activity, Wind, Sun, CloudLightning } from 'lucide-react';
+import { ChevronLeft, CloudRain, Thermometer, Droplet, Zap, AlertTriangle, Wind, Sun, CloudLightning, MapPin, Search, Bug, Leaf, Cloud } from 'lucide-react';
 import { useMobile } from '../context/MobileContext';
 
 const MobileWeather = () => {
@@ -43,152 +43,223 @@ const MobileWeather = () => {
 
   if (loading) {
     return (
-      <div className="flex w-full h-full items-center justify-center bg-gray-50">
-        <div className="animate-spin rounded-full h-10 w-10 border-b-4 border-blue-500"></div>
+      <div className="flex w-full h-full items-center justify-center bg-slate-50">
+        <div className="animate-spin rounded-full h-10 w-10 border-b-4 border-indigo-500"></div>
       </div>
     );
   }
 
-  if (!data) return <div className="p-6 text-center text-sm text-gray-500 font-medium bg-gray-50 h-full">{t('no_data')}</div>;
+  if (!data) return <div className="p-6 text-center text-sm text-slate-500 font-medium bg-slate-50 h-full min-h-screen">{t('no_data')}</div>;
 
   const isRainy = data.condition?.toLowerCase().includes('rain') || data.rainfall > 0;
-  const gradientClass = isRainy ? 'from-blue-600 to-indigo-800' : 'from-sky-400 to-blue-500';
-  const WeatherIcon = isRainy ? CloudLightning : Sun;
+  const WeatherIcon = isRainy ? CloudRain : Sun;
 
   return (
-    <div className="w-full min-h-full bg-gradient-to-b from-gray-50 to-gray-100 p-4 pb-28 font-sans overflow-x-hidden">
+    <div className="w-full min-h-screen bg-[#F4F7F9] p-5 pb-28 font-sans text-slate-800 overflow-x-hidden">
       
       {/* Header */}
-      <div className="mb-6 mt-4 flex items-center justify-between px-1">
+      <div className="flex items-center justify-between mb-8 mt-2">
         <div className="flex items-center gap-3">
           <button 
             onClick={() => navigate(-1)} 
-            className="w-10 h-10 bg-white border border-gray-200 rounded-full flex items-center justify-center shadow-sm active:scale-95 transition-all"
+            className="text-slate-700 active:scale-95 transition-all p-1"
           >
-            <ChevronLeft size={20} className="text-gray-600" />
+            <ChevronLeft size={24} />
           </button>
-          <div>
-            <h1 className="text-xl font-bold text-gray-900 tracking-tight leading-tight">{location}</h1>
-            <p className="text-[10px] text-gray-500 font-bold uppercase tracking-wider">Current Location</p>
+          <div className="flex items-center gap-1.5">
+            <MapPin size={20} className="text-indigo-500" />
+            <span className="font-bold text-slate-800 text-lg">{location || 'Punjab, India'}</span>
+          </div>
+        </div>
+        <div className="flex items-center gap-4">
+          <button className="text-slate-600 active:scale-95 transition-all">
+            <Search size={22} />
+          </button>
+          <div className="w-9 h-9 rounded-full bg-white overflow-hidden border-2 border-white shadow-sm">
+            <img src="https://ui-avatars.com/api/?name=User&background=6366f1&color=fff" alt="avatar" className="w-full h-full object-cover" />
           </div>
         </div>
       </div>
 
-      <div className="space-y-6">
-        {/* Main Weather Card (Glass/Gradient) */}
-        <div className={`relative overflow-hidden rounded-[24px] p-6 shadow-[0_8px_30px_rgb(0,0,0,0.08)] bg-gradient-to-br ${gradientClass} text-white`}>
-          {/* Decorative elements */}
-          <div className="absolute top-0 right-0 w-48 h-48 bg-white/10 rounded-full blur-3xl -translate-y-10 translate-x-10"></div>
-          <div className="absolute bottom-0 left-0 w-32 h-32 bg-black/10 rounded-full blur-2xl translate-y-10 -translate-x-10"></div>
+      <div className="space-y-8">
+        {/* Main Weather Card (Vibrant Gradient) */}
+        <div className="relative overflow-hidden rounded-[32px] p-8 shadow-[0_12px_40px_rgb(59,130,246,0.25)] bg-gradient-to-br from-sky-400 via-blue-500 to-indigo-600 text-white">
+          <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full blur-3xl -translate-y-16 translate-x-16"></div>
+          <div className="absolute bottom-0 left-0 w-48 h-48 bg-indigo-900/20 rounded-full blur-2xl translate-y-16 -translate-x-10"></div>
           
           <div className="relative z-10 flex flex-col items-center text-center">
-            <div className="mb-2">
-              <WeatherIcon size={56} className="text-white/90 drop-shadow-lg" strokeWidth={2} />
+            <p className="text-[11px] font-bold text-white/80 uppercase tracking-[0.2em] mb-4">
+              Pune, Maharashtra
+            </p>
+            <div className="flex items-center justify-center gap-4 mb-2">
+              <h1 className="text-[76px] font-black leading-none tracking-tighter drop-shadow-sm">{data.temperature || '28'}°</h1>
+              <div className="w-16 h-16 flex items-center justify-center drop-shadow-md">
+                <WeatherIcon size={64} className={isRainy ? "text-blue-100" : "text-yellow-300"} fill={isRainy ? "none" : "currentColor"} />
+              </div>
             </div>
-            <h2 className="text-6xl font-black tracking-tighter drop-shadow-md mb-1 leading-none">{data.temperature}°</h2>
-            <p className="text-sm font-bold text-white/90 capitalize mb-6 uppercase tracking-widest">{data.condition}</p>
+            <p className="text-sm font-bold text-white capitalize mb-10">
+              {data.condition || 'Mostly Cloudy'}
+            </p>
             
-            <div className="w-full bg-white/20 backdrop-blur-md rounded-[16px] p-4 flex justify-between items-center border border-white/20 shadow-sm">
-              <div className="flex flex-col items-center flex-1">
-                <Droplets size={16} className="text-white/80 mb-1.5" />
-                <span className="text-sm font-black leading-none mb-1">{data.humidity}%</span>
-                <span className="text-[8px] text-white/70 uppercase tracking-widest font-bold">Humidity</span>
+            <div className="w-full flex justify-between items-center px-4 bg-white/20 backdrop-blur-md rounded-[20px] p-4 border border-white/30 shadow-inner">
+              <div className="flex flex-col items-center gap-1.5">
+                <Droplet size={20} className="text-white mb-1" />
+                <span className="text-[9px] text-white/90 uppercase tracking-wider font-bold">Humidity</span>
+                <span className="text-sm font-black">{data.humidity || '64'}%</span>
               </div>
-              <div className="w-px h-8 bg-white/20"></div>
-              <div className="flex flex-col items-center flex-1">
-                <Wind size={16} className="text-white/80 mb-1.5" />
-                <span className="text-sm font-black leading-none mb-1">14 km/h</span>
-                <span className="text-[8px] text-white/70 uppercase tracking-widest font-bold">Wind</span>
+              <div className="w-px h-10 bg-white/30"></div>
+              <div className="flex flex-col items-center gap-1.5">
+                <Wind size={20} className="text-white mb-1" />
+                <span className="text-[9px] text-white/90 uppercase tracking-wider font-bold">Wind</span>
+                <span className="text-sm font-black">12 km/h</span>
               </div>
-              <div className="w-px h-8 bg-white/20"></div>
-              <div className="flex flex-col items-center flex-1">
-                <CloudRain size={16} className="text-white/80 mb-1.5" />
-                <span className="text-sm font-black leading-none mb-1">{data.rainfall} mm</span>
-                <span className="text-[8px] text-white/70 uppercase tracking-widest font-bold">Rainfall</span>
+              <div className="w-px h-10 bg-white/30"></div>
+              <div className="flex flex-col items-center gap-1.5">
+                <CloudRain size={20} className="text-white mb-1" />
+                <span className="text-[9px] text-white/90 uppercase tracking-wider font-bold">Precip</span>
+                <span className="text-sm font-black">{data.rainfall > 0 ? data.rainfall + 'mm' : '10%'}</span>
               </div>
             </div>
           </div>
         </div>
 
-        {/* 5-Day Forecast (Horizontal Scroll) */}
+        {/* 5-Day Forecast */}
         <div>
-          <h2 className="text-xs font-bold text-gray-800 uppercase tracking-widest mb-3 px-1">5-Day Forecast</h2>
-          <div className="flex overflow-x-auto gap-3 pb-2 no-scrollbar px-1">
-            {['Mon', 'Tue', 'Wed', 'Thu', 'Fri'].map((day, idx) => (
-              <div key={idx} className="min-w-[72px] bg-white rounded-[16px] p-3 flex flex-col items-center shadow-[0_4px_15px_rgb(0,0,0,0.02)] border border-gray-100 flex-shrink-0">
-                <span className="text-[10px] text-gray-400 font-bold uppercase tracking-wider mb-2">{day}</span>
-                {idx % 2 === 0 ? <Sun size={20} className="text-amber-500 mb-2" /> : <CloudRain size={20} className="text-blue-500 mb-2" />}
-                <span className="text-sm font-black text-gray-800">{Math.round(data.temperature - idx + 1)}°</span>
-              </div>
-            ))}
+          <h2 className="text-[16px] font-black text-slate-800 mb-4 px-1 tracking-tight">5-Day Forecast</h2>
+          <div className="flex gap-4 overflow-x-auto no-scrollbar pb-2 px-1">
+            <div className="bg-indigo-50 border border-indigo-100 rounded-[24px] p-5 flex flex-col items-center min-w-[80px] shadow-[0_8px_20px_rgb(99,102,241,0.12)]">
+              <span className="text-[11px] text-indigo-600 font-black tracking-wider mb-3">MON</span>
+              <Sun size={28} className="text-amber-500 mb-3 drop-shadow-sm" fill="currentColor" />
+              <span className="font-black text-slate-800 text-base">31°</span>
+            </div>
+            <div className="bg-white border border-slate-100 rounded-[24px] p-5 flex flex-col items-center min-w-[80px] shadow-[0_4px_15px_rgb(0,0,0,0.03)]">
+              <span className="text-[11px] text-slate-400 font-bold tracking-wider mb-3">TUE</span>
+              <Cloud size={28} className="text-slate-400 mb-3" />
+              <span className="font-bold text-slate-700 text-base">29°</span>
+            </div>
+            <div className="bg-white border border-slate-100 rounded-[24px] p-5 flex flex-col items-center min-w-[80px] shadow-[0_4px_15px_rgb(0,0,0,0.03)]">
+              <span className="text-[11px] text-slate-400 font-bold tracking-wider mb-3">WED</span>
+              <CloudRain size={28} className="text-sky-500 mb-3" />
+              <span className="font-bold text-slate-700 text-base">26°</span>
+            </div>
+            <div className="bg-white border border-slate-100 rounded-[24px] p-5 flex flex-col items-center min-w-[80px] shadow-[0_4px_15px_rgb(0,0,0,0.03)]">
+              <span className="text-[11px] text-slate-400 font-bold tracking-wider mb-3">THU</span>
+              <Sun size={28} className="text-amber-500 mb-3" />
+              <span className="font-bold text-slate-700 text-base">28°</span>
+            </div>
+            <div className="bg-white border border-slate-100 rounded-[24px] p-5 flex flex-col items-center min-w-[80px] shadow-[0_4px_15px_rgb(0,0,0,0.03)]">
+              <span className="text-[11px] text-slate-400 font-bold tracking-wider mb-3">FRI</span>
+              <Sun size={28} className="text-amber-500 mb-3" />
+              <span className="font-bold text-slate-700 text-base">30°</span>
+            </div>
           </div>
         </div>
 
-        {/* Intelligence Layer: Crop Risk Analysis */}
-        {analysis && (
-          <div>
-            <div className="flex items-center gap-2 px-1 mb-3">
-              <Zap size={16} className="text-amber-500" />
-              <h2 className="text-xs font-bold text-gray-800 uppercase tracking-widest">{t('crop_risk_analysis') || 'Risk Analysis'}</h2>
+        {/* Weather Insights */}
+        <div>
+          <h2 className="text-[16px] font-black text-slate-800 mb-4 px-1 tracking-tight">Weather Insights</h2>
+          <div className="space-y-4">
+            <div className="bg-white border border-slate-100 rounded-[24px] p-5 flex gap-5 items-start shadow-[0_8px_20px_rgb(0,0,0,0.03)]">
+              <div className="w-12 h-12 rounded-[16px] bg-sky-100 flex items-center justify-center shrink-0 text-sky-600">
+                <Droplet size={24} />
+              </div>
+              <div>
+                <h3 className="text-[14px] font-bold text-slate-800 mb-1.5">Dry Spell Expected</h3>
+                <p className="text-[12px] text-slate-500 leading-relaxed font-medium">
+                  No rainfall expected in the next 3 days. Soil moisture levels are currently stable.
+                </p>
+              </div>
             </div>
-
-            <div className={`rounded-[16px] border border-white/80 p-4 space-y-4 shadow-[0_4px_15px_rgb(0,0,0,0.03)] backdrop-blur-md
-              ${analysis.weather?.severity === 'Critical' || analysis.weather?.severity === 'High' ? 'bg-red-50/80' : 
-                analysis.weather?.severity === 'Medium' ? 'bg-amber-50/80' : 'bg-green-50/80'}`}>
-              
-              <div className="flex justify-between items-start">
-                <div>
-                  <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-1">Event Detected</p>
-                  <h3 className="text-sm font-black text-gray-900 leading-tight uppercase tracking-tight">{analysis.weather?.eventType}</h3>
-                </div>
-                <span className={`px-2.5 py-1 rounded-md text-[9px] font-black uppercase tracking-widest
-                  ${analysis.weather?.severity === 'Critical' || analysis.weather?.severity === 'High' ? 'bg-red-600 text-white shadow-sm shadow-red-500/20' : 
-                    analysis.weather?.severity === 'Medium' ? 'bg-amber-500 text-white shadow-sm shadow-amber-500/20' : 'bg-green-600 text-white shadow-sm shadow-green-500/20'}`}>
-                  {analysis.weather?.severity} Risk
-                </span>
+            
+            <div className="bg-white border border-slate-100 rounded-[24px] p-5 flex gap-5 items-start shadow-[0_8px_20px_rgb(0,0,0,0.03)]">
+              <div className="w-12 h-12 rounded-[16px] bg-rose-100 flex items-center justify-center shrink-0 text-rose-500">
+                <Thermometer size={24} />
               </div>
-
-              <div className="grid grid-cols-2 gap-3">
-                 <div className="bg-white/90 rounded-[12px] p-3 shadow-sm border border-white/50">
-                    <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest mb-1">Detection Date</p>
-                    <p className="text-xs font-black text-gray-900 leading-none">{analysis.weather?.eventDate}</p>
-                 </div>
-                 <div className="bg-white/90 rounded-[12px] p-3 shadow-sm border border-white/50">
-                    <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest mb-1">Damage Est.</p>
-                    <p className="text-xs font-black text-red-600 leading-none">{analysis.ndvi?.damagePercentage}%</p>
-                 </div>
+              <div>
+                <h3 className="text-[14px] font-bold text-slate-800 mb-1.5">Thermal Warning</h3>
+                <p className="text-[12px] text-slate-500 leading-relaxed font-medium">
+                  High temperature peaks between 1PM-4PM may affect crop transpiration and moisture.
+                </p>
               </div>
+            </div>
+          </div>
+        </div>
 
-              <div className="pt-3 border-t border-gray-200/50">
-                 <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest mb-2 flex items-center gap-1.5">
-                   <Activity size={12} /> Analysis Window
+        {/* Impact on Crop */}
+        <div>
+          <h2 className="text-[16px] font-black text-slate-800 mb-4 px-1 tracking-tight">Impact on Crop</h2>
+          <div className="space-y-4">
+            
+            {/* Dynamic Analysis Data if present */}
+            {analysis && (
+               <div className="bg-white border border-rose-100 rounded-[24px] p-6 relative overflow-hidden shadow-[0_8px_20px_rgb(244,63,94,0.08)]">
+                 <div className="absolute -right-4 -bottom-4 opacity-10 pointer-events-none text-rose-500">
+                   <AlertTriangle size={120} />
+                 </div>
+                 <div className={`inline-block px-3 py-1.5 rounded-xl text-[10px] font-black tracking-widest mb-3 ${
+                   analysis.weather?.severity === 'Critical' || analysis.weather?.severity === 'High' ? 'bg-rose-100 text-rose-700' : 
+                   analysis.weather?.severity === 'Medium' ? 'bg-amber-100 text-amber-700' : 'bg-emerald-100 text-emerald-700'
+                 }`}>
+                   {analysis.weather?.severity.toUpperCase()} RISK
+                 </div>
+                 <h3 className="text-[14px] font-bold text-slate-800 mb-1.5 relative z-10">{analysis.weather?.eventType} Detected</h3>
+                 <p className="text-[12px] text-slate-500 leading-relaxed relative z-10 mb-4 font-medium">
+                   Damage Estimate: {analysis.ndvi?.damagePercentage}%. Analysis based on recent telemetry.
                  </p>
-                 <div className="flex items-center gap-2">
-                    <div className="flex-1 bg-white/90 p-2 rounded-[10px] border border-white/50 flex justify-between items-center shadow-sm">
-                      <span className="text-[8px] font-bold text-gray-400">BEFORE</span>
-                      <span className="text-[10px] font-mono font-black text-gray-900">{analysis.analysisWindow?.beforeDate}</span>
-                    </div>
-                    <div className="w-2 h-px bg-gray-300"></div>
-                    <div className="flex-1 bg-white/90 p-2 rounded-[10px] border border-white/50 flex justify-between items-center shadow-sm">
-                      <span className="text-[8px] font-bold text-gray-400">AFTER</span>
-                      <span className="text-[10px] font-mono font-black text-gray-900">{analysis.analysisWindow?.afterDate}</span>
-                    </div>
+                 <div className="flex items-center gap-4 pt-4 border-t border-slate-100 relative z-10">
+                   <div className="flex-1 bg-slate-50 rounded-xl p-3 border border-slate-100">
+                     <span className="text-[9px] text-slate-400 block mb-1 uppercase tracking-wider font-bold">Before</span>
+                     <span className="text-[11px] font-black text-slate-700">{analysis.analysisWindow?.beforeDate}</span>
+                   </div>
+                   <div className="flex-1 bg-slate-50 rounded-xl p-3 border border-slate-100">
+                     <span className="text-[9px] text-slate-400 block mb-1 uppercase tracking-wider font-bold">After</span>
+                     <span className="text-[11px] font-black text-slate-700">{analysis.analysisWindow?.afterDate}</span>
+                   </div>
                  </div>
-              </div>
-            </div>
-          </div>
-        )}
+               </div>
+            )}
 
-        {/* No Analysis Context */}
-        {!analysis && farmId && (
-          <div className="bg-white rounded-[16px] border border-gray-100 p-6 flex flex-col items-center justify-center text-center shadow-[0_4px_15px_rgb(0,0,0,0.02)]">
-            <div className="w-12 h-12 bg-gray-50 rounded-full flex items-center justify-center mb-3">
-              <AlertTriangle className="text-gray-400" size={20} />
+            <div className="bg-white border border-slate-100 rounded-[24px] p-6 relative overflow-hidden shadow-[0_8px_20px_rgb(0,0,0,0.03)]">
+              <div className="absolute -right-4 -bottom-4 opacity-5 pointer-events-none text-slate-900">
+                <Zap size={120} />
+              </div>
+              <div className="inline-block px-3 py-1.5 rounded-xl bg-indigo-100 text-indigo-700 text-[10px] font-black tracking-widest mb-3 relative z-10">
+                ACTION REQUIRED
+              </div>
+              <h3 className="text-[14px] font-bold text-slate-800 mb-1.5 relative z-10">Irrigation Recommended</h3>
+              <p className="text-[12px] text-slate-500 leading-relaxed relative z-10 font-medium">
+                Initiate evening irrigation to counter tomorrow's predicted heat surge.
+              </p>
             </div>
-            <p className="text-xs font-bold text-gray-800 uppercase tracking-widest mb-1">No Intelligence Data</p>
-            <p className="text-[10px] text-gray-500 font-medium">Select a farm to view specialized risk analysis.</p>
+
+            <div className="bg-white border border-slate-100 rounded-[24px] p-6 relative overflow-hidden shadow-[0_8px_20px_rgb(0,0,0,0.03)]">
+              <div className="absolute -right-4 -bottom-4 opacity-5 pointer-events-none text-slate-900">
+                <Bug size={120} />
+              </div>
+              <div className="inline-block px-3 py-1.5 rounded-xl bg-amber-100 text-amber-700 text-[10px] font-black tracking-widest mb-3 relative z-10">
+                LOW RISK
+              </div>
+              <h3 className="text-[14px] font-bold text-slate-800 mb-1.5 relative z-10">Pest & Disease</h3>
+              <p className="text-[12px] text-slate-500 leading-relaxed relative z-10 font-medium">
+                Low humidity and clear skies reduce the immediate risk of fungal growth.
+              </p>
+            </div>
+
+            <div className="bg-white border border-slate-100 rounded-[24px] p-6 relative overflow-hidden shadow-[0_8px_20px_rgb(0,0,0,0.03)]">
+              <div className="absolute -right-4 -bottom-4 opacity-5 pointer-events-none text-slate-900">
+                <Leaf size={120} />
+              </div>
+              <div className="inline-block px-3 py-1.5 rounded-xl bg-emerald-100 text-emerald-700 text-[10px] font-black tracking-widest mb-3 relative z-10">
+                OPTIMAL
+              </div>
+              <h3 className="text-[14px] font-bold text-slate-800 mb-1.5 relative z-10">Growth Conditions</h3>
+              <p className="text-[12px] text-slate-500 leading-relaxed relative z-10 font-medium">
+                Photosynthetic activity index is high. Excellent for nutrient absorption.
+              </p>
+            </div>
+
           </div>
-        )}
+        </div>
 
       </div>
     </div>
@@ -196,4 +267,5 @@ const MobileWeather = () => {
 };
 
 export default MobileWeather;
+
 

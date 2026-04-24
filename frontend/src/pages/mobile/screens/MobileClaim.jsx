@@ -156,11 +156,13 @@ const MobileClaim = () => {
         </div>
       </div>
 
-<<<<<<< HEAD
-      <div className="max-w-2xl bg-white rounded-lg shadow-sm border border-gray-200 p-6 relative">
+      <div className="bg-white rounded-[16px] shadow-[0_4px_15px_rgb(0,0,0,0.02)] border border-gray-100 p-5 relative overflow-hidden">
         
+        {/* Background Decorative Blur */}
+        <div className="absolute -top-10 -right-10 w-32 h-32 bg-green-500/5 rounded-full blur-2xl"></div>
+
         {isOffline && (
-          <div className="mb-6 p-4 bg-yellow-50 border border-yellow-200 rounded-md flex items-start gap-3">
+          <div className="mb-6 p-4 bg-yellow-50 border border-yellow-200 rounded-xl flex items-start gap-3 relative z-10">
             <AlertCircle className="text-yellow-600 shrink-0 mt-0.5" size={18} />
             <div>
               <p className="text-sm font-bold text-yellow-800">Offline Mode Active</p>
@@ -168,12 +170,6 @@ const MobileClaim = () => {
             </div>
           </div>
         )}
-=======
-      <div className="bg-white rounded-[16px] shadow-[0_4px_15px_rgb(0,0,0,0.02)] border border-gray-100 p-5 relative overflow-hidden">
-        
-        {/* Background Decorative Blur */}
-        <div className="absolute -top-10 -right-10 w-32 h-32 bg-green-500/5 rounded-full blur-2xl"></div>
->>>>>>> c6d385f (changes in ui)
 
         {errorVisible && (
           <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-xl flex items-start gap-3 relative z-10">

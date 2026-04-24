@@ -61,52 +61,6 @@ const MobileStatus = () => {
         </div>
       </div>
 
-<<<<<<< HEAD
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
-        {claims.length === 0 ? (
-          <div className="p-8 text-center text-sm text-gray-500">{t('no_data')}</div>
-        ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-sm whitespace-nowrap">
-              <thead className="bg-gray-50/50 border-b border-gray-200 uppercase text-xs font-semibold text-gray-600 tracking-wider">
-                <tr>
-                  <th className="px-6 py-3" data-i18n="claim_id">{t('claim_id')}</th>
-                  <th className="px-6 py-3" data-i18n="damage_type">{t('damage_type')}</th>
-                  <th className="px-6 py-3" data-i18n="claim_amount">{t('claim_amount')}</th>
-                  <th className="px-6 py-3" data-i18n="date">{t('date')}</th>
-                  <th className="px-6 py-3" data-i18n="status">{t('status')}</th>
-                  <th className="px-6 py-3 text-right" data-i18n="action">{t('action')}</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-100">
-                {claims.map((item) => (
-                  <tr 
-                    key={item.claimId} 
-                    onClick={() => navigate(`/mobile/details/${item.claimId}`)}
-                    className="hover:bg-gray-50 cursor-pointer transition-colors"
-                  >
-                    <td className="px-6 py-4 font-mono font-medium text-gray-900">
-                      {item.claimId}
-                      {item.isOffline && <span className="ml-2 text-[10px] bg-yellow-100 text-yellow-800 px-1.5 py-0.5 rounded uppercase font-bold" data-i18n="offline_badge">Offline</span>}
-                    </td>
-                    <td className="px-6 py-4 text-gray-700" data-i18n={item.damageType?.toLowerCase().replace(' ', '_')}>
-                      {t(item.damageType?.toLowerCase().replace(' ', '_') || item.damageType)}
-                    </td>
-                    <td className="px-6 py-4 text-green-600 font-medium">₹{item.claimAmount?.toLocaleString()}</td>
-                    <td className="px-6 py-4 text-gray-500">{new Date(item.createdAt).toLocaleDateString()}</td>
-                    <td className="px-6 py-4">
-                      <span className={`px-2.5 py-0.5 rounded text-xs font-semibold uppercase ring-1 ${getStatusBadge(item.status)}`} data-i18n={item.status?.toLowerCase()}>
-                        {t(item.status?.toLowerCase() || item.status)}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 text-right">
-                      <ChevronRight className="text-gray-400 inline-block" size={18} />
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-=======
       {/* Filters */}
       <div className="flex overflow-x-auto gap-2 pb-2 mb-6 no-scrollbar px-1">
         {['All', 'Pending', 'Approved', 'Rejected'].map(f => (
@@ -128,7 +82,6 @@ const MobileStatus = () => {
         {filteredClaims.length === 0 ? (
           <div className="bg-white rounded-[16px] p-8 text-center text-gray-500 font-medium shadow-[0_4px_15px_rgb(0,0,0,0.02)] border border-gray-100">
             {t('no_data')}
->>>>>>> c6d385f (changes in ui)
           </div>
         ) : (
           filteredClaims.map((item) => (
