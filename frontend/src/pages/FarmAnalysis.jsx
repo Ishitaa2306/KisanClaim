@@ -161,9 +161,20 @@ export default function FarmAnalysis() {
 
   // Local satellite/crop images for before/after comparison
   const strictBeforeImg = new URL('../assets/images/before_healthy_crop.jpg', import.meta.url).href;
-  const strictAfterImg = isHighRisk
-    ? new URL('../assets/images/after_high_damage.jpg', import.meta.url).href
-    : new URL('../assets/images/after_moderate.jpg', import.meta.url).href;
+  
+  let strictAfterImg;
+  const farmStatus = farm?.riskLevel?.toUpperCase();
+  
+  if (farmStatus === 'HIGH' || farmStatus === 'CRITICAL') {
+    strictAfterImg = new URL('../assets/images/after_high_damage.jpg', import.meta.url).href;
+  } else if (farmStatus === 'LOW' || farmStatus === 'HEALTHY') {
+    strictAfterImg = new URL('../assets/images/after_moderate.jpg', import.meta.url).href;
+  } else {
+    // Keep existing behavior unchanged for other categories
+    strictAfterImg = isHighRisk 
+      ? new URL('../assets/images/after_fraud.jpg', import.meta.url).href 
+      : new URL('../assets/images/after_moderate.jpg', import.meta.url).href;
+  }
 
   const handleDisburse = () => {
     // Pass farm data explicitly via state
