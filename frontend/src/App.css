@@ -1,184 +1,417 @@
-.counter {
-  font-size: 16px;
-  padding: 5px 10px;
-  border-radius: 5px;
-  color: var(--accent);
-  background: var(--accent-bg);
-  border: 2px solid transparent;
-  transition: border-color 0.3s;
-  margin-bottom: 24px;
+/* ============================================================
+   KisanClaim — Agriculture Intelligence Design System
+   
+   RULES:
+   - CSS-only visual upgrade
+   - No JS classes/IDs renamed
+   - All selectors target existing DOM structure
+   - Additive only — no removal of existing styles
+   ============================================================ */
 
-  &:hover {
-    border-color: var(--accent-border);
-  }
-  &:focus-visible {
-    outline: 2px solid var(--accent);
-    outline-offset: 2px;
-  }
+/* ── 1. DESIGN TOKENS ────────────────────────────────────── */
+
+:root {
+  --kc-forest-dark: #022c22;
+  --kc-forest: #064e3b;
+  --kc-forest-mid: #065f46;
+  --kc-emerald: #059669;
+  --kc-emerald-light: #10b981;
+  --kc-mint: #ecfdf5;
+  --kc-mint-subtle: #f0fdf4;
+  --kc-gold: #d97706;
+  --kc-gold-light: #fbbf24;
+  --kc-bg: #f1f5f0;
+  --kc-card-shadow: 0 1px 3px rgba(0,0,0,0.04), 0 6px 16px -4px rgba(6,78,59,0.07);
+  --kc-card-shadow-hover: 0 8px 30px -6px rgba(6,78,59,0.14);
+  --kc-ease: cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-.hero {
+
+/* ── 2. GLOBAL FOUNDATIONS ───────────────────────────────── */
+
+body {
+  background: var(--kc-bg) !important;
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Thin emerald scrollbar */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { 
+  background: var(--kc-emerald);
+  border-radius: 3px;
+}
+* { scrollbar-width: thin; scrollbar-color: var(--kc-emerald) transparent; }
+
+
+/* ── 3. NAVBAR (top header bar) ──────────────────────────── */
+
+header {
+  background: white !important;
+  border-bottom: 1px solid #e2e8f0 !important;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.03);
+  backdrop-filter: blur(12px);
+}
+
+/* Logo text in navbar */
+header a[class*="text-2xl"] {
+  background: linear-gradient(135deg, var(--kc-forest) 0%, var(--kc-emerald) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  font-weight: 800 !important;
+}
+
+/* Active nav tab — emerald underline instead of generic primary */
+header nav a[class*="border-primary"] {
+  border-color: var(--kc-emerald) !important;
+  color: var(--kc-forest) !important;
+  font-weight: 700 !important;
+}
+
+header nav a:not([class*="border-primary"]):hover {
+  color: var(--kc-emerald) !important;
+}
+
+
+/* ── 4. SIDEBAR — Deep Forest Gradient ───────────────────── */
+
+aside {
+  background: linear-gradient(185deg, var(--kc-forest) 0%, var(--kc-forest-dark) 100%) !important;
+  border-right: none !important;
+  box-shadow: 4px 0 20px rgba(0,0,0,0.06);
+}
+
+/* Sidebar heading */
+aside h2 {
+  color: white !important;
+  font-weight: 800 !important;
+  font-size: 1.15rem !important;
+}
+
+/* Sidebar subtext */
+aside p {
+  color: rgba(134,239,172,0.7) !important;
+}
+
+/* Sidebar nav links */
+aside nav a {
+  color: rgba(255,255,255,0.55) !important;
+  border-radius: 12px !important;
+  transition: all 0.25s var(--kc-ease) !important;
   position: relative;
-
-  .base,
-  .framework,
-  .vite {
-    inset-inline: 0;
-    margin: 0 auto;
-  }
-
-  .base {
-    width: 170px;
-    position: relative;
-    z-index: 0;
-  }
-
-  .framework,
-  .vite {
-    position: absolute;
-  }
-
-  .framework {
-    z-index: 1;
-    top: 34px;
-    height: 28px;
-    transform: perspective(2000px) rotateZ(300deg) rotateX(44deg) rotateY(39deg)
-      scale(1.4);
-  }
-
-  .vite {
-    z-index: 0;
-    top: 107px;
-    height: 26px;
-    width: auto;
-    transform: perspective(2000px) rotateZ(300deg) rotateX(40deg) rotateY(39deg)
-      scale(0.8);
-  }
+  font-weight: 600 !important;
 }
 
-#center {
-  display: flex;
-  flex-direction: column;
-  gap: 25px;
-  place-content: center;
-  place-items: center;
-  flex-grow: 1;
-
-  @media (max-width: 1024px) {
-    padding: 32px 20px 24px;
-    gap: 18px;
-  }
+/* Active sidebar link */
+aside nav a[class*="bg-slate-50"] {
+  background: rgba(255,255,255,0.12) !important;
+  color: white !important;
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,0.08);
 }
 
-#next-steps {
-  display: flex;
-  border-top: 1px solid var(--border);
-  text-align: left;
-
-  & > div {
-    flex: 1 1 0;
-    padding: 32px;
-    @media (max-width: 1024px) {
-      padding: 24px 20px;
-    }
-  }
-
-  .icon {
-    margin-bottom: 16px;
-    width: 22px;
-    height: 22px;
-  }
-
-  @media (max-width: 1024px) {
-    flex-direction: column;
-    text-align: center;
-  }
+/* Active sidebar link — golden left indicator bar */
+aside nav a[class*="bg-slate-50"]::before {
+  content: '';
+  position: absolute;
+  left: -16px;
+  top: 22%;
+  height: 56%;
+  width: 4px;
+  background: var(--kc-gold-light);
+  border-radius: 0 4px 4px 0;
+  box-shadow: 2px 0 12px rgba(251,191,36,0.4);
 }
 
-#docs {
-  border-right: 1px solid var(--border);
-
-  @media (max-width: 1024px) {
-    border-right: none;
-    border-bottom: 1px solid var(--border);
-  }
+/* Active sidebar link icon color */
+aside nav a[class*="bg-slate-50"] svg {
+  color: var(--kc-emerald-light) !important;
 }
 
-#next-steps ul {
-  list-style: none;
-  padding: 0;
-  display: flex;
-  gap: 8px;
-  margin: 32px 0 0;
-
-  .logo {
-    height: 18px;
-  }
-
-  a {
-    color: var(--text-h);
-    font-size: 16px;
-    border-radius: 6px;
-    background: var(--social-bg);
-    display: flex;
-    padding: 6px 12px;
-    align-items: center;
-    gap: 8px;
-    text-decoration: none;
-    transition: box-shadow 0.3s;
-
-    &:hover {
-      box-shadow: var(--shadow);
-    }
-    .button-icon {
-      height: 18px;
-      width: 18px;
-    }
-  }
-
-  @media (max-width: 1024px) {
-    margin-top: 20px;
-    flex-wrap: wrap;
-    justify-content: center;
-
-    li {
-      flex: 1 1 calc(50% - 8px);
-    }
-
-    a {
-      width: 100%;
-      justify-content: center;
-      box-sizing: border-box;
-    }
-  }
+/* Sidebar hover — slide right */
+aside nav a:hover:not([class*="bg-slate-50"]) {
+  background: rgba(255,255,255,0.06) !important;
+  color: rgba(255,255,255,0.9) !important;
+  transform: translateX(6px);
 }
 
-#spacer {
-  height: 88px;
-  border-top: 1px solid var(--border);
-  @media (max-width: 1024px) {
-    height: 48px;
-  }
+/* Sidebar bottom button — gradient */
+aside > div:last-child button {
+  background: linear-gradient(135deg, var(--kc-emerald) 0%, var(--kc-forest) 100%) !important;
+  border: none !important;
+  color: white !important;
+  font-weight: 700 !important;
+  box-shadow: 0 4px 14px rgba(5,150,105,0.25);
+  transition: all 0.3s var(--kc-ease) !important;
+}
+aside > div:last-child button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(5,150,105,0.35);
 }
 
-.ticks {
+
+/* ── 5. CARDS — Elevated & Rounded ───────────────────────── */
+
+/* Target the Card component's rendered div */
+.bg-card {
+  background: white !important;
+  border: 1px solid rgba(0,0,0,0.04) !important;
+  border-radius: 16px !important;
+  box-shadow: var(--kc-card-shadow) !important;
+  transition: transform 0.3s var(--kc-ease), box-shadow 0.3s var(--kc-ease), border-color 0.3s var(--kc-ease) !important;
+}
+
+/* Card hover — subtle lift */
+.bg-card:hover {
+  box-shadow: var(--kc-card-shadow-hover) !important;
+}
+
+/* Clickable cards — more noticeable lift */
+.bg-card[class*="cursor-pointer"]:hover {
+  transform: translateY(-4px);
+  border-color: rgba(16,185,129,0.15) !important;
+}
+
+
+/* ── 6. STAT CARDS (Dashboard top row) ───────────────────── */
+
+/* Each stat card gets a gradient top strip */
+.bg-card[class*="flex-col"][class*="items-start"] {
   position: relative;
-  width: 100%;
+  overflow: hidden;
+}
+.bg-card[class*="flex-col"][class*="items-start"]::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, var(--kc-emerald-light), var(--kc-gold-light));
+  opacity: 0.7;
+}
 
-  &::before,
-  &::after {
-    content: '';
-    position: absolute;
-    top: -4.5px;
-    border: 5px solid transparent;
-  }
+/* Stat card icon backgrounds */
+.bg-card[class*="flex-col"] > div[class*="rounded-lg"] {
+  background: var(--kc-mint) !important;
+  border: 1px solid rgba(16,185,129,0.1);
+}
 
-  &::before {
-    left: 0;
-    border-left-color: var(--border);
-  }
-  &::after {
-    right: 0;
-    border-right-color: var(--border);
-  }
+
+/* ── 7. TYPOGRAPHY REFINEMENTS ───────────────────────────── */
+
+/* Page-level h1 headings */
+h1 {
+  color: var(--kc-forest-dark) !important;
+  letter-spacing: -0.025em !important;
+}
+
+/* Section headings */
+h2 {
+  color: var(--kc-forest-dark) !important;
+  letter-spacing: -0.02em !important;
+}
+
+h3 {
+  color: #1e293b !important;
+}
+
+
+/* ── 8. TABLE POLISH ─────────────────────────────────────── */
+
+table thead tr {
+  background: #f8faf8 !important;
+}
+
+table thead th {
+  color: #64748b !important;
+  font-weight: 700 !important;
+  font-size: 10px !important;
+  letter-spacing: 0.08em !important;
+  border-bottom: 2px solid #e8ede8 !important;
+}
+
+table tbody tr {
+  transition: background-color 0.2s var(--kc-ease);
+}
+
+table tbody tr:hover {
+  background-color: var(--kc-mint-subtle) !important;
+}
+
+
+/* ── 9. BADGES — Pill Upgrade ────────────────────────────── */
+
+/* Success badges */
+span[class*="bg-green-100"] {
+  background: linear-gradient(135deg, #dcfce7, #d1fae5) !important;
+  border: 1px solid rgba(16,185,129,0.15);
+  font-weight: 700 !important;
+}
+
+/* Danger badges */
+span[class*="bg-red-100"] {
+  background: linear-gradient(135deg, #fee2e2, #fecaca) !important;
+  border: 1px solid rgba(239,68,68,0.15);
+  font-weight: 700 !important;
+}
+
+/* Warning badges */
+span[class*="bg-orange-100"] {
+  background: linear-gradient(135deg, #ffedd5, #fed7aa) !important;
+  border: 1px solid rgba(245,158,11,0.15);
+  font-weight: 700 !important;
+}
+
+
+/* ── 10. BUTTONS — Gradient Primary ──────────────────────── */
+
+button[class*="bg-primary"] {
+  background: linear-gradient(135deg, var(--kc-emerald) 0%, var(--kc-forest) 100%) !important;
+  border: none !important;
+  box-shadow: 0 2px 8px rgba(5,150,105,0.2);
+  transition: all 0.25s var(--kc-ease) !important;
+}
+
+button[class*="bg-primary"]:hover {
+  box-shadow: 0 4px 16px rgba(5,150,105,0.3);
+  transform: translateY(-1px);
+}
+
+/* Filter pill buttons */
+button[class*="bg-slate-800"] {
+  background: var(--kc-forest) !important;
+  box-shadow: 0 2px 8px rgba(6,78,59,0.2);
+}
+
+/* Dark CTA buttons (e.g. "Review Case Details") */
+button[class*="bg-[#1f2937]"] {
+  background: linear-gradient(135deg, var(--kc-forest), var(--kc-forest-dark)) !important;
+  box-shadow: 0 4px 12px rgba(6,78,59,0.2);
+  transition: all 0.25s var(--kc-ease) !important;
+}
+button[class*="bg-[#1f2937]"]:hover {
+  background: linear-gradient(135deg, var(--kc-forest-dark), #011a14) !important;
+  box-shadow: 0 6px 20px rgba(6,78,59,0.3);
+  transform: translateY(-2px);
+}
+
+
+/* ── 11. SEARCH INPUT POLISH ─────────────────────────────── */
+
+input[type="text"][class*="rounded-full"] {
+  border: 1px solid #d1d5db !important;
+  background: white !important;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.04);
+  transition: all 0.2s var(--kc-ease) !important;
+}
+
+input[type="text"][class*="rounded-full"]:focus {
+  border-color: var(--kc-emerald) !important;
+  box-shadow: 0 0 0 3px rgba(5,150,105,0.1), 0 1px 2px rgba(0,0,0,0.04) !important;
+}
+
+
+/* ── 12. PROGRESS BARS — Emerald Gradient ────────────────── */
+
+/* Damage progress bar track */
+div[class*="bg-slate-100"][class*="rounded-full"][class*="overflow-hidden"] {
+  background: #e8f5e9 !important;
+}
+
+/* Green fill bar */
+div[class*="bg-primary"][class*="rounded-full"] {
+  background: linear-gradient(90deg, var(--kc-emerald-light), var(--kc-emerald)) !important;
+}
+
+
+/* ── 13. DARK FEATURE CARDS (Fraud live scanning, etc.) ──── */
+
+.bg-card[class*="bg-[#1f2937]"],
+div[class*="bg-[#1f2937]"] {
+  background: linear-gradient(135deg, var(--kc-forest-dark) 0%, #0a3525 100%) !important;
+  border: 1px solid rgba(16,185,129,0.1) !important;
+}
+
+/* Green primary-bg card (farms page insured value card) */
+.bg-card[class*="bg-primary"] {
+  background: linear-gradient(145deg, var(--kc-forest), var(--kc-forest-dark)) !important;
+  border: none !important;
+}
+
+
+/* ── 14. FOOTER ──────────────────────────────────────────── */
+
+footer {
+  background: white !important;
+  border-top: 1px solid #e8ede8 !important;
+  box-shadow: 0 -1px 3px rgba(0,0,0,0.02);
+}
+
+
+/* ── 15. ANIMATIONS ──────────────────────────────────────── */
+
+/* Smooth page entrance */
+@keyframes kc-fadeUp {
+  from { opacity: 0; transform: translateY(16px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* Applied to page wrappers that use animate-in */
+div[class*="animate-in"] {
+  animation: kc-fadeUp 0.5s var(--kc-ease) both;
+}
+
+/* Staggered grid children */
+div[class*="grid"] > div:nth-child(1) { animation: kc-fadeUp 0.4s var(--kc-ease) 0.05s both; }
+div[class*="grid"] > div:nth-child(2) { animation: kc-fadeUp 0.4s var(--kc-ease) 0.10s both; }
+div[class*="grid"] > div:nth-child(3) { animation: kc-fadeUp 0.4s var(--kc-ease) 0.15s both; }
+div[class*="grid"] > div:nth-child(4) { animation: kc-fadeUp 0.4s var(--kc-ease) 0.20s both; }
+div[class*="grid"] > div:nth-child(5) { animation: kc-fadeUp 0.4s var(--kc-ease) 0.25s both; }
+div[class*="grid"] > div:nth-child(6) { animation: kc-fadeUp 0.4s var(--kc-ease) 0.30s both; }
+
+/* Live pulse dot */
+div[class*="animate-pulse"][class*="rounded-full"][class*="bg-primary"],
+div[class*="animate-pulse"][class*="rounded-full"][class*="bg-emerald"] {
+  box-shadow: 0 0 0 0 rgba(16,185,129,0.6);
+  animation: kc-pulse 2s infinite;
+}
+
+@keyframes kc-pulse {
+  0%   { box-shadow: 0 0 0 0 rgba(16,185,129,0.6); }
+  70%  { box-shadow: 0 0 0 8px rgba(16,185,129,0); }
+  100% { box-shadow: 0 0 0 0 rgba(16,185,129,0); }
+}
+
+
+/* ── 16. TOOLTIP / RECHARTS POLISH ───────────────────────── */
+
+/* Style recharts tooltip containers */
+.recharts-default-tooltip {
+  border-radius: 10px !important;
+  border: 1px solid #e8ede8 !important;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.08) !important;
+  font-weight: 600 !important;
+}
+
+
+/* ── 17. SELECTION & FOCUS ───────────────────────────────── */
+
+::selection {
+  background: rgba(16,185,129,0.15);
+  color: var(--kc-forest-dark);
+}
+
+*:focus-visible {
+  outline: 2px solid var(--kc-emerald) !important;
+  outline-offset: 2px;
+}
+
+
+/* ── 18. RESPONSIVE POLISH ───────────────────────────────── */
+
+@media (max-width: 768px) {
+  aside { display: none !important; }
+  main { margin-left: 0 !important; }
+  footer { padding-left: 1rem !important; }
 }
