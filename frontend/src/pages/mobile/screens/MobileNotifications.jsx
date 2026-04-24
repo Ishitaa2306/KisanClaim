@@ -1,6 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ChevronLeft, Bell, AlertTriangle, Info } from 'lucide-react';
+import { 
+  ChevronLeft, Bell, AlertTriangle, Info, 
+  ShieldAlert, CheckCircle2, MessageSquare, Loader2
+} from 'lucide-react';
 import { useMobile } from '../context/MobileContext';
 
 const MobileNotifications = () => {
@@ -25,55 +28,66 @@ const MobileNotifications = () => {
   }, [farmerId]);
 
   const getIcon = (type) => {
-    if (type === 'alert' || type === 'weather_warning') return <AlertTriangle className="text-red-500" size={20} />;
-    if (type === 'claim_update') return <Info className="text-green-600" size={20} />;
-    return <Bell className="text-gray-400" size={20} />;
+    if (type === 'alert' || type === 'weather_warning') return <AlertTriangle className="text-red-500" size={18} />;
+    if (type === 'claim_update') return <CheckCircle2 className="text-green-600" size={18} />;
+    return <MessageSquare className="text-blue-600" size={18} />;
   };
 
   if (loading) {
     return (
-      <div className="flex w-full h-full items-center justify-center bg-gray-50">
-        <div className="animate-spin rounded-full h-10 w-10 border-b-4 border-green-600"></div>
+      <div className="flex w-full min-h-screen items-center justify-center bg-gray-50">
+        <Loader2 className="animate-spin text-green-600" size={32} />
       </div>
     );
   }
 
   return (
-    <div className="w-full min-h-full bg-gradient-to-b from-gray-50 to-gray-100 p-4 pb-28 font-sans">
+    <div className="w-full min-h-screen bg-gray-50 text-gray-900 font-sans pb-24 overflow-x-hidden">
       
-      <div className="mb-6 mt-4 flex items-center gap-3 px-1">
-        <button 
-          onClick={() => navigate(-1)} 
-          className="w-10 h-10 bg-white border border-gray-200 rounded-full flex items-center justify-center shadow-sm active:scale-95 transition-all shrink-0"
-        >
-          <ChevronLeft size={20} className="text-gray-600" />
-        </button>
-        <div>
-          <h1 className="text-xl font-bold text-gray-900 tracking-tight leading-tight" data-i18n="notifications">{t('notifications') || 'Notifications'}</h1>
-          <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest mt-0.5" data-i18n="notifications_desc">{t('notifications_desc')}</p>
+      {/* Header */}
+      <div className="bg-white pt-10 px-6 pb-6 border-b border-gray-100">
+        <div className="flex items-center gap-4 mb-1">
+          <button onClick={() => navigate(-1)} className="p-2 -ml-2 rounded-full hover:bg-gray-100 transition-colors">
+            <ChevronLeft size={24} />
+          </button>
+          <h2 className="text-sm font-bold text-green-600 tracking-widest uppercase">
+            {t('notifications_label')}
+          </h2>
         </div>
+        <p className="text-xs text-gray-500">
+          {t('alerts_updates')}
+        </p>
       </div>
 
-      <div className="bg-white rounded-[16px] shadow-[0_4px_15px_rgb(0,0,0,0.02)] border border-gray-100 overflow-hidden">
+      <div className="px-6 space-y-4 pt-6">
         {data.length === 0 ? (
-          <div className="p-8 text-center text-xs font-bold text-gray-500 uppercase tracking-widest">{t('no_data')}</div>
-        ) : (
-          <div className="divide-y divide-gray-50">
-            {data.map((item) => (
-              <div key={item.id} className={`p-4 flex gap-3 hover:bg-gray-50 transition-colors ${!item.read ? 'bg-green-50/30 relative' : ''}`}>
-                {!item.read && <div className="absolute left-0 top-0 bottom-0 w-1 bg-green-500 rounded-r"></div>}
-                <div className="w-10 h-10 rounded-full flex items-center justify-center shrink-0 bg-gray-50 border border-gray-100">
-                  {getIcon(item.type)}
-                </div>
-                <div className="flex-1">
-                  <p className={`text-sm text-gray-900 leading-tight mb-1 ${!item.read ? 'font-black' : 'font-medium'}`}>{item.message}</p>
-                  <p className="text-[9px] text-gray-400 font-bold uppercase tracking-widest">{new Date(item.timestamp).toLocaleString()}</p>
-                </div>
-              </div>
-            ))}
+          <div className="py-20 flex flex-col items-center text-center">
+            <div className="w-20 h-20 bg-white rounded-full flex items-center justify-center mb-6 text-gray-200 border border-gray-100 shadow-sm">
+              <Bell size={32} />
+            </div>
+            <p className="text-xs font-bold text-gray-400 uppercase tracking-[0.2em]">{t('no_data')}</p>
           </div>
+        ) : (
+          data.map((item) => (
+            <div 
+              key={item.id} 
+              className={`bg-white border border-gray-100 rounded-[28px] p-5 flex gap-4 relative overflow-hidden transition-all active:scale-[0.98] shadow-sm ${!item.read ? 'border-l-4 border-l-green-600' : ''}`}
+            >
+              <div className="w-12 h-12 rounded-2xl bg-gray-50 flex items-center justify-center shrink-0 border border-gray-100">
+                {getIcon(item.type)}
+              </div>
+              <div className="flex-1">
+                <p className={`text-sm leading-tight mb-2 ${!item.read ? 'text-gray-900 font-bold' : 'text-gray-500 font-medium'}`}>{item.message}</p>
+                <p className="text-[9px] text-gray-400 font-bold uppercase tracking-widest">{new Date(item.timestamp).toLocaleString()}</p>
+              </div>
+              {!item.read && (
+                <div className="absolute top-4 right-4 w-2 h-2 bg-green-500 rounded-full" />
+              )}
+            </div>
+          ))
         )}
       </div>
+
     </div>
   );
 };

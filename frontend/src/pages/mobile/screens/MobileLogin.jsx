@@ -1,6 +1,10 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowRight, ArrowLeft, Loader2, User, Smartphone, Badge } from 'lucide-react';
+import { 
+  ArrowRight, ChevronLeft, Loader2, User, 
+  Smartphone, ShieldCheck, Lock, CheckCircle2,
+  AlertTriangle
+} from 'lucide-react';
 import { useMobile } from '../context/MobileContext';
 
 const MobileLogin = () => {
@@ -10,7 +14,6 @@ const MobileLogin = () => {
   const [step, setStep] = useState(1);
   const [name, setName] = useState('Manoj Rajput');
   const [phone, setPhone] = useState('9876543210');
-  const [aadhaar, setAadhaar] = useState('');
   const [otp, setOtp] = useState('');
   
   const [loading, setLoading] = useState(false);
@@ -28,10 +31,9 @@ const MobileLogin = () => {
   const handleSendOtp = async (e) => {
     e.preventDefault();
     setErrorVisible(null);
-    setDemoOtpBox(null);
     
     if (!name || !phone || phone.length < 10) {
-      return setErrorVisible('Name and valid phone number are required.');
+      return setErrorVisible('error_credentials');
     }
 
     setLoading(true);
@@ -59,7 +61,7 @@ const MobileLogin = () => {
     e.preventDefault();
     setErrorVisible(null);
 
-    if (!otp) return setErrorVisible('Please enter the OTP.');
+    if (!otp) return setErrorVisible('error_otp');
 
     setLoading(true);
     try {
@@ -77,283 +79,147 @@ const MobileLogin = () => {
 
     } catch (err) {
       console.error(err);
-      setErrorVisible(err.message || 'Invalid OTP.');
+      setErrorVisible('error_invalid_otp');
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="w-full h-screen relative flex flex-col justify-center items-center overflow-hidden font-sans bg-black">
+    <div className="w-full h-screen bg-white text-gray-900 font-sans flex flex-col relative overflow-hidden">
       
       {/* Background Image */}
       <div 
-        className="absolute inset-0 bg-cover bg-center z-0 scale-105"
+        className="absolute inset-0 bg-cover bg-center z-0"
         style={{ 
           backgroundImage: "url('https://images.unsplash.com/photo-1592982537447-7440770cbfc9?q=80&w=1000&auto=format&fit=crop')", 
           filter: 'blur(4px)' 
         }}
       />
       
-      {/* Dark overlay */}
-      <div 
-        className="absolute inset-0 z-10" 
-        style={{ backgroundColor: 'rgba(0, 0, 0, 0.25)' }} 
-      />
+      {/* Light overlay */}
+      <div className="absolute inset-0 bg-white/80 z-10" />
 
-      {/* Back Button */}
-      <button 
-        onClick={() => {
-          if (step === 2) {
-            setStep(1);
-            setOtp('');
-          } else {
-            navigate('/mobile/landing');
-          }
-        }}
-        className="absolute top-6 left-6 p-2 rounded-full hover:bg-white/10 transition-colors z-30 flex items-center gap-2"
-      >
-        <ArrowLeft className="w-5 h-5 text-white" />
-        <span className="text-white text-xs font-semibold tracking-wider">EXIT</span>
-      </button>
-
-      {/* Main Content Area */}
-      <div className="relative z-20 w-full px-6 flex flex-col items-center max-w-md animate-[fade-in_0.6s_ease-out]">
-        
-        {/* Glass Card */}
-        <div 
-          className="w-full p-8 flex flex-col items-center"
-          style={{
-            background: 'rgba(255, 255, 255, 0.18)',
-            backdropFilter: 'blur(18px)',
-            WebkitBackdropFilter: 'blur(18px)',
-            borderRadius: '24px',
-            border: '1px solid rgba(255, 255, 255, 0.25)',
-            boxShadow: '0 8px 32px 0 rgba(0, 0, 0, 0.15)'
-          }}
+      {/* Header */}
+      <div className="pt-10 px-6 pb-12 flex items-center justify-between z-20">
+        <button 
+          onClick={() => step === 2 ? setStep(1) : navigate('/mobile/landing')} 
+          className="p-2 -ml-2 rounded-full hover:bg-white/50 transition-colors"
         >
-          
-          <div className="text-center mb-8 w-full">
-            <h1 className="text-4xl font-normal text-white tracking-tight mb-2">
-              KisanClaim
-            </h1>
-            <p className="text-gray-100 text-[10px] font-bold tracking-[0.25em] uppercase opacity-90">
-              INTELLIGENCE PLATFORM
-            </p>
-          </div>
+          <ChevronLeft size={24} />
+        </button>
+        <div className="flex items-center gap-2">
+          <ShieldCheck className="text-green-600" size={18} />
+          <span className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">{t('secure_login')}</span>
+        </div>
+      </div>
 
-          {errorVisible && (
-            <div className="w-full mb-6 p-3 bg-red-500/20 border border-red-500/50 rounded-xl flex items-center justify-center">
-              <p className="text-xs font-medium text-red-100">{errorVisible}</p>
+      {/* Content */}
+      <div className="px-8 flex-1 z-20 flex flex-col">
+        <div className="mb-10">
+          <h1 className="text-4xl font-black text-gray-900 tracking-tight mb-2 uppercase">
+            {step === 1 ? t('login_title') : t('verify_otp')}
+          </h1>
+          <p className="text-gray-500 text-sm font-medium">
+            {step === 1 ? t('login_subtitle') : t('enter_otp')}
+          </p>
+        </div>
+
+        {step === 1 ? (
+          <form onSubmit={handleSendOtp} className="space-y-6">
+            <div className="space-y-2">
+              <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1">{t('farmer_name')}</label>
+              <div className="relative group">
+                <User className="absolute left-4 top-4 text-gray-300 group-focus-within:text-green-600 transition-colors" size={18} />
+                <input 
+                  type="text" 
+                  className="w-full bg-white border border-gray-200 rounded-2xl py-4 pl-12 pr-5 text-sm font-bold text-gray-900 outline-none focus:border-green-600 transition-all shadow-sm"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  placeholder="Full Name"
+                />
+              </div>
             </div>
-          )}
 
-          {step === 1 ? (
-            <form onSubmit={handleSendOtp} className="w-full space-y-5">
-              
-              <div className="flex flex-col gap-1.5">
-                <label className="text-[10px] font-bold text-gray-100 uppercase tracking-widest ml-1">
-                  Full Name
-                </label>
-                <div className="relative">
-                  <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                    <User className="h-5 w-5 text-white/70" />
-                  </div>
-                  <input 
-                    type="text" 
-                    className="w-full rounded-xl py-3.5 pl-12 pr-4 text-base font-medium text-white placeholder-white/50 outline-none transition-all"
-                    style={{
-                      background: 'rgba(255, 255, 255, 0.12)',
-                      border: '1px solid rgba(255, 255, 255, 0.25)'
-                    }}
-                    value={name}
-                    onChange={(e) => setName(e.target.value)}
-                    disabled={loading}
-                    placeholder="Enter your credentials"
-                    onFocus={(e) => {
-                      e.target.style.borderColor = '#4ade80';
-                      e.target.style.boxShadow = '0 0 0 1px rgba(74, 222, 128, 0.5)';
-                    }}
-                    onBlur={(e) => {
-                      e.target.style.borderColor = 'rgba(255, 255, 255, 0.25)';
-                      e.target.style.boxShadow = 'none';
-                    }}
-                  />
+            <div className="space-y-2">
+              <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1">{t('phone_number')}</label>
+              <div className="relative group">
+                <Smartphone className="absolute left-4 top-4 text-gray-300 group-focus-within:text-green-600 transition-colors" size={18} />
+                <input 
+                  type="tel" 
+                  maxLength={10}
+                  className="w-full bg-white border border-gray-200 rounded-2xl py-4 pl-12 pr-5 text-sm font-bold text-gray-900 outline-none focus:border-green-600 transition-all shadow-sm"
+                  value={phone}
+                  onChange={(e) => setPhone(e.target.value.replace(/\D/g, ''))}
+                  placeholder="10-digit number"
+                />
+              </div>
+            </div>
+
+            <button 
+              type="submit"
+              disabled={loading || phone.length < 10}
+              className="w-full mt-8 bg-green-600 hover:bg-green-700 text-white py-5 rounded-[24px] font-bold text-xs tracking-[0.2em] uppercase shadow-2xl shadow-green-100 active:scale-95 transition-all flex items-center justify-center gap-3"
+            >
+              {loading ? <Loader2 size={18} className="animate-spin" /> : <><ArrowRight size={18} /> {t('send_otp')}</>}
+            </button>
+          </form>
+        ) : (
+          <form onSubmit={handleVerifyOtp} className="space-y-8">
+            {demoOtpBox && (
+              <div className="bg-green-50 border border-green-100 rounded-2xl p-4 flex items-center justify-between">
+                <div>
+                  <p className="text-[9px] font-bold text-green-600 uppercase tracking-widest mb-0.5">Demo OTP</p>
+                  <p className="text-xl font-mono font-black text-gray-900 tracking-widest">{demoOtpBox}</p>
+                </div>
+                <div className="w-10 h-10 rounded-full bg-green-100 flex items-center justify-center">
+                  <CheckCircle2 className="text-green-600" size={20} />
                 </div>
               </div>
+            )}
 
-              <div className="flex flex-col gap-1.5">
-                <label className="text-[10px] font-bold text-gray-100 uppercase tracking-widest ml-1">
-                  Phone Number
-                </label>
-                <div className="relative">
-                  <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                    <Smartphone className="h-5 w-5 text-white/70" />
-                  </div>
-                  <input 
-                    type="tel" 
-                    maxLength={10}
-                    className="w-full rounded-xl py-3.5 pl-12 pr-4 text-base font-medium text-white placeholder-white/50 outline-none transition-all"
-                    style={{
-                      background: 'rgba(255, 255, 255, 0.12)',
-                      border: '1px solid rgba(255, 255, 255, 0.25)'
-                    }}
-                    value={phone}
-                    onChange={(e) => setPhone(e.target.value.replace(/\D/g, ''))}
-                    disabled={loading}
-                    placeholder="+91 00000 00000"
-                    onFocus={(e) => {
-                      e.target.style.borderColor = '#4ade80';
-                      e.target.style.boxShadow = '0 0 0 1px rgba(74, 222, 128, 0.5)';
-                    }}
-                    onBlur={(e) => {
-                      e.target.style.borderColor = 'rgba(255, 255, 255, 0.25)';
-                      e.target.style.boxShadow = 'none';
-                    }}
-                  />
-                </div>
+            <div className="space-y-4">
+              <div className="flex justify-between items-center px-1">
+                <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">{t('otp_placeholder')}</label>
+                <button type="button" className="text-[10px] font-bold text-green-600 uppercase tracking-widest">{t('resend')}</button>
               </div>
-
-              <div className="flex flex-col gap-1.5 mb-2">
-                <label className="text-[10px] font-bold text-gray-100 uppercase tracking-widest ml-1">
-                  Aadhaar ID
-                </label>
-                <div className="relative">
-                  <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                    <Badge className="h-5 w-5 text-white/70" />
-                  </div>
-                  <input 
-                    type="text" 
-                    className="w-full rounded-xl py-3.5 pl-12 pr-4 text-base font-medium text-white placeholder-white/50 outline-none transition-all"
-                    style={{
-                      background: 'rgba(255, 255, 255, 0.12)',
-                      border: '1px solid rgba(255, 255, 255, 0.25)'
-                    }}
-                    value={aadhaar}
-                    onChange={(e) => setAadhaar(e.target.value)}
-                    disabled={loading}
-                    placeholder="0000 0000 0000"
-                    onFocus={(e) => {
-                      e.target.style.borderColor = '#4ade80';
-                      e.target.style.boxShadow = '0 0 0 1px rgba(74, 222, 128, 0.5)';
-                    }}
-                    onBlur={(e) => {
-                      e.target.style.borderColor = 'rgba(255, 255, 255, 0.25)';
-                      e.target.style.boxShadow = 'none';
-                    }}
-                  />
-                </div>
-              </div>
-
-              <button 
-                type="submit"
-                disabled={loading || phone.length < 10 || !name}
-                className="w-full mt-4 text-white rounded-full py-4 flex items-center justify-center gap-2 font-bold text-sm tracking-wider shadow-lg active:scale-95 transition-all duration-300 disabled:opacity-60 disabled:cursor-not-allowed"
-                style={{
-                  background: 'linear-gradient(to right, #16a34a, #22c55e)'
-                }}
-              >
-                {loading ? (
-                  <Loader2 className="w-5 h-5 animate-spin" />
-                ) : (
-                  <>
-                    SECURE LOGIN
-                    <ArrowRight className="w-5 h-5" />
-                  </>
-                )}
-              </button>
-            </form>
-          ) : (
-            <form onSubmit={handleVerifyOtp} className="w-full space-y-6 flex flex-col items-center">
-              
-              {demoOtpBox && (
-                <div className="w-full bg-white/10 border border-white/20 rounded-xl p-4 mb-2 text-center shadow-sm">
-                  <p className="text-[10px] text-green-300 uppercase font-bold tracking-wider mb-1">Demo OTP Received</p>
-                  <p className="text-2xl font-mono font-black text-white tracking-widest">{demoOtpBox}</p>
-                </div>
-              )}
-
-              <div className="flex flex-col gap-1.5 w-full">
-                <label className="text-[10px] font-bold text-gray-100 uppercase tracking-widest ml-1 text-center">
-                  Enter Verification Code
-                </label>
+              <div className="relative group">
+                <Lock className="absolute left-4 top-5 text-gray-300 group-focus-within:text-green-600 transition-colors" size={18} />
                 <input 
                   ref={otpInputRef}
                   type="tel" 
                   maxLength={6}
-                  placeholder="• • • • • •"
-                  className="w-full text-center tracking-[0.5em] text-3xl font-mono font-black rounded-xl py-5 px-3 text-white placeholder-white/30 outline-none transition-all shadow-sm"
-                  style={{
-                    background: 'rgba(255, 255, 255, 0.12)',
-                    border: '1px solid rgba(255, 255, 255, 0.25)'
-                  }}
+                  className="w-full bg-white border border-gray-200 rounded-2xl py-5 pl-12 pr-5 text-2xl font-mono font-black text-gray-900 tracking-[0.5em] outline-none focus:border-green-600 transition-all text-center shadow-sm"
                   value={otp}
                   onChange={(e) => setOtp(e.target.value.replace(/\D/g, ''))}
-                  disabled={loading}
-                  onFocus={(e) => {
-                    e.target.style.borderColor = '#4ade80';
-                    e.target.style.boxShadow = '0 0 0 1px rgba(74, 222, 128, 0.5)';
-                  }}
-                  onBlur={(e) => {
-                    e.target.style.borderColor = 'rgba(255, 255, 255, 0.25)';
-                    e.target.style.boxShadow = 'none';
-                  }}
+                  placeholder="••••••"
                 />
               </div>
-              
-              <button 
-                type="submit"
-                disabled={loading || otp.length < 6}
-                className="w-full mt-2 text-white rounded-full py-4 flex items-center justify-center gap-2 font-bold text-sm tracking-wider shadow-lg active:scale-95 transition-all duration-300 disabled:opacity-60 disabled:cursor-not-allowed"
-                style={{
-                  background: 'linear-gradient(to right, #16a34a, #22c55e)'
-                }}
-              >
-                {loading ? (
-                  <Loader2 className="w-5 h-5 animate-spin" />
-                ) : (
-                  <>
-                    VERIFY & LOGIN
-                    <ArrowRight className="w-5 h-5" />
-                  </>
-                )}
-              </button>
-              
-              <p className="text-xs font-medium text-gray-200 mt-2">
-                Didn't receive code? <button type="button" className="text-green-400 font-bold hover:text-green-300 tracking-wider">RESEND</button>
-              </p>
-            </form>
-          )}
+            </div>
 
-          {/* Footer inside card */}
-          <div className="mt-10 flex flex-col items-center gap-1.5 opacity-80">
-            <span className="text-[9px] font-semibold text-gray-200 uppercase tracking-widest">
-              AUTHORIZED ACCESS ONLY
-            </span>
-            <span className="text-[9px] font-semibold text-green-400 uppercase tracking-widest cursor-pointer hover:text-green-300">
-              TERMS & CONDITIONS
-            </span>
+            <button 
+              type="submit"
+              disabled={loading || otp.length < 6}
+              className="w-full mt-4 bg-green-600 hover:bg-green-700 text-white py-5 rounded-[24px] font-bold text-xs tracking-[0.2em] uppercase shadow-2xl shadow-green-100 active:scale-95 transition-all flex items-center justify-center gap-3"
+            >
+              {loading ? <Loader2 size={18} className="animate-spin" /> : <><CheckCircle2 size={18} /> {t('verify_otp')}</>}
+            </button>
+          </form>
+        )}
+
+        {errorVisible && (
+          <div className="mt-6 p-4 bg-red-50 border border-red-100 rounded-2xl flex items-center gap-3">
+            <AlertTriangle className="text-red-600 shrink-0" size={18} />
+            <p className="text-[10px] font-bold text-red-600 uppercase tracking-wide">{t(errorVisible) || errorVisible}</p>
           </div>
-
-        </div>
-
-        {/* Secure Access Footer Line */}
-        <div className="flex items-center gap-4 mt-8 opacity-60">
-          <div className="h-px w-8 bg-white/40"></div>
-          <span className="text-[10px] font-semibold text-white uppercase tracking-[0.3em]">
-            SECURE ACCESS
-          </span>
-          <div className="h-px w-8 bg-white/40"></div>
-        </div>
-
+        )}
       </div>
-      
-      <style>{`
-        @keyframes fade-in {
-          from { opacity: 0; transform: translateY(10px); }
-          to { opacity: 1; transform: translateY(0); }
-        }
-      `}</style>
+
+      {/* Footer */}
+      <div className="p-8 text-center opacity-30">
+        <p className="text-[9px] font-bold text-gray-400 uppercase tracking-[0.3em]">{t('kisanclaim')} v2.4.0</p>
+      </div>
+
     </div>
   );
 };

@@ -1,14 +1,17 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ChevronRight, FileText, Filter } from 'lucide-react';
+import { 
+  ChevronRight, FileText, Filter, Check, X, 
+  Clock, Shield, Search, ChevronLeft, Loader2
+} from 'lucide-react';
 import { useMobile } from '../context/MobileContext';
 
 const MobileStatus = () => {
-  const { t, farmerId, farmerName } = useMobile();
+  const { t, farmerId } = useMobile();
   const navigate = useNavigate();
   const [claims, setClaims] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [filter, setFilter] = useState('All');
+  const [filter, setFilter] = useState('all');
 
   const fetchClaims = async () => {
     try {
@@ -30,95 +33,99 @@ const MobileStatus = () => {
     fetchClaims();
   }, []);
 
-  const getStatusBadgeClass = (status) => {
-    if (status === 'Pending') return 'bg-yellow-50 text-yellow-700 border border-yellow-100';
-    if (status === 'Approved') return 'bg-green-50 text-green-700 border border-green-100';
-    if (status === 'Rejected') return 'bg-red-50 text-red-700 border border-red-100';
-    return 'bg-gray-50 text-gray-700 border border-gray-100';
-  };
-
-  const filteredClaims = claims.filter(c => filter === 'All' || c.status === filter);
+  const filteredClaims = claims.filter(c => {
+    if (filter === 'all') return true;
+    return c.status.toLowerCase() === filter.toLowerCase();
+  });
 
   if (loading) {
     return (
-      <div className="flex w-full h-full items-center justify-center bg-gray-50">
-        <div className="animate-spin rounded-full h-10 w-10 border-b-4 border-green-600"></div>
+      <div className="flex w-full min-h-screen items-center justify-center bg-gray-50">
+        <Loader2 className="animate-spin text-green-600" size={32} />
       </div>
     );
   }
 
   return (
-    <div className="w-full min-h-full bg-gradient-to-b from-gray-50 to-gray-100 p-4 pb-28 font-sans">
+    <div className="w-full min-h-screen bg-gray-50 text-gray-900 font-sans pb-24 overflow-x-hidden">
       
       {/* Header */}
-      <div className="mb-6 mt-4 flex justify-between items-center px-1">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900 tracking-tight leading-tight">{t('claim_activity') || 'My Claims'}</h1>
-          <p className="text-gray-500 text-xs mt-1 font-medium">{claims.length} total claims filed</p>
+      <div className="bg-white pt-10 px-6 pb-6 border-b border-gray-100">
+        <div className="flex items-center gap-4 mb-1">
+          <button onClick={() => navigate(-1)} className="p-2 -ml-2 rounded-full hover:bg-gray-100 transition-colors">
+            <ChevronLeft size={24} />
+          </button>
+          <h2 className="text-sm font-bold text-green-600 tracking-widest uppercase">
+            {t('my_claims')}
+          </h2>
         </div>
-        <div className="w-11 h-11 bg-white rounded-full shadow-sm flex items-center justify-center border border-gray-100 shrink-0">
-          <FileText className="text-green-600" size={20} />
-        </div>
+        <p className="text-xs text-gray-500">
+          {claims.length} {t('total_claims_filed')}
+        </p>
       </div>
 
       {/* Filters */}
-      <div className="flex overflow-x-auto gap-2 pb-2 mb-6 no-scrollbar px-1">
-        {['All', 'Pending', 'Approved', 'Rejected'].map(f => (
+      <div className="bg-white px-6 py-4 mb-6 border-b border-gray-100 overflow-x-auto flex gap-3 no-scrollbar">
+        {['all', 'pending', 'approved', 'rejected'].map((f) => (
           <button 
             key={f}
             onClick={() => setFilter(f)}
-            className={`px-4 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition-all
-              ${filter === f 
-                ? 'bg-green-600 text-white shadow-[0_4px_10px_rgba(22,163,74,0.3)]' 
-                : 'bg-white text-gray-500 border border-gray-200 hover:bg-gray-50'}`}
+            className={`px-6 py-2.5 rounded-full text-[10px] font-bold uppercase tracking-widest transition-all border whitespace-nowrap ${
+              filter === f 
+                ? 'bg-green-600 text-white border-green-600 shadow-lg shadow-green-100' 
+                : 'bg-gray-50 text-gray-500 border-gray-200 hover:border-gray-300'
+            }`}
           >
-            {f}
+            {t(f)}
           </button>
         ))}
       </div>
 
       {/* Claims List */}
-      <div className="space-y-4">
-        {filteredClaims.length === 0 ? (
-          <div className="bg-white rounded-[16px] p-8 text-center text-gray-500 font-medium shadow-[0_4px_15px_rgb(0,0,0,0.02)] border border-gray-100">
-            {t('no_data')}
-          </div>
-        ) : (
-          filteredClaims.map((item) => (
+      <div className="px-6 space-y-4">
+        {filteredClaims.length > 0 ? (
+          filteredClaims.map((claim) => (
             <div 
-              key={item.claimId}
-              onClick={() => navigate(`/mobile/details/${item.claimId}`)}
-              className="bg-white/90 backdrop-blur-md rounded-[16px] p-4 shadow-[0_4px_15px_rgb(0,0,0,0.02)] border border-white flex items-center justify-between active:scale-[0.98] transition-all cursor-pointer hover:shadow-[0_4px_20px_rgb(0,0,0,0.05)]"
+              key={claim._id || claim.claimId}
+              onClick={() => navigate(`/mobile/details/${claim.claimId}`)}
+              className="bg-white border border-gray-100 rounded-[28px] p-5 active:scale-[0.98] transition-all flex items-center gap-4 shadow-sm group hover:border-green-200"
             >
-              <div className="flex items-center justify-between w-full">
-                
-                {/* Left Side: Claim ID & Status */}
-                <div className="flex flex-col gap-1.5">
-                  <h3 className="text-sm font-bold text-gray-800 leading-none">#{item.claimId}</h3>
-                  <span className={`px-2 py-0.5 rounded text-[9px] font-black uppercase tracking-wider w-max ${getStatusBadgeClass(item.status)}`}>
-                    {item.status}
-                  </span>
-                </div>
+              <div className={`w-12 h-12 rounded-2xl flex items-center justify-center shrink-0 border ${
+                claim.status === 'Approved' ? 'bg-green-50 border-green-100 text-green-600' :
+                claim.status === 'Rejected' ? 'bg-red-50 border-red-100 text-red-600' :
+                'bg-yellow-50 border-yellow-100 text-yellow-600'
+              }`}>
+                {claim.status === 'Approved' ? <Check size={24} /> :
+                 claim.status === 'Rejected' ? <X size={24} /> :
+                 <Clock size={24} />}
+              </div>
 
-                {/* Middle: Damage & Amount */}
-                <div className="flex items-center gap-6">
-                  <div className="text-right">
-                    <p className="text-[10px] text-gray-400 font-bold uppercase tracking-wider mb-0.5">Damage</p>
-                    <p className="text-xs font-black text-red-500 leading-none">{item.damagePercentage || '--'}%</p>
-                  </div>
-                  <div className="text-right">
-                    <p className="text-[10px] text-gray-400 font-bold uppercase tracking-wider mb-0.5">Amount</p>
-                    <p className="text-xs font-black text-green-600 leading-none">₹{item.claimAmount?.toLocaleString()}</p>
-                  </div>
+              <div className="flex-1">
+                <div className="flex justify-between items-center mb-1">
+                  <h4 className="text-sm font-bold text-gray-900 uppercase tracking-tight">#{claim.claimId}</h4>
+                  <span className={`text-[9px] font-bold uppercase tracking-widest ${
+                    claim.status === 'Approved' ? 'text-green-600' :
+                    claim.status === 'Rejected' ? 'text-red-600' :
+                    'text-yellow-600'
+                  }`}>{t(claim.status.toLowerCase())}</span>
                 </div>
-
-                {/* Right Side: Arrow */}
-                <div className="w-8 h-8 rounded-full bg-gray-50 flex items-center justify-center text-gray-300 ml-2">
-                  <ChevronRight size={18} />
+                <div className="flex items-center gap-3 text-[10px] text-gray-400 font-bold uppercase tracking-tighter">
+                  <span>{new Date(claim.createdAt || Date.now()).toLocaleDateString()}</span>
+                  <div className="w-1 h-1 rounded-full bg-gray-200" />
+                  <span>₹{claim.claimAmount?.toLocaleString() || '0'}</span>
                 </div>
               </div>
+
+              <ChevronRight className="text-gray-300 group-hover:text-green-600 transition-colors" size={20} />
             </div>
           ))
+        ) : (
+          <div className="py-20 flex flex-col items-center text-center">
+            <div className="w-20 h-20 bg-gray-50 rounded-full flex items-center justify-center mb-6 text-gray-200 border border-gray-100">
+              <Shield size={32} />
+            </div>
+            <p className="text-xs font-bold text-gray-400 uppercase tracking-[0.2em]">{t('no_data')}</p>
+          </div>
         )}
       </div>
 

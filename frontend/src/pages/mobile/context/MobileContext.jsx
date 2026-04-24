@@ -1,38 +1,36 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { translations } from '../locales';
+import en from '../../../locales/en.json';
+import hi from '../../../locales/hi.json';
+import kn from '../../../locales/kn.json';
+import mr from '../../../locales/mr.json';
+import te from '../../../locales/te.json';
+import ta from '../../../locales/ta.json';
+
+const translations = { en, hi, kn, mr, te, ta };
 
 const MobileContext = createContext();
 
 export const MobileProvider = ({ children }) => {
-  const [lang, setLang] = useState('en');
+  const [lang, setLang] = useState(localStorage.getItem('mobile_lang') || 'en');
   const [farmerId, setFarmerId] = useState(sessionStorage.getItem('farmerId') || null);
   const [farmerName, setFarmerName] = useState(sessionStorage.getItem('farmerName') || '');
 
   useEffect(() => {
     const saved = localStorage.getItem('mobile_lang');
-    if (saved) setLang(saved);
+    if (saved && translations[saved]) {
+      setLang(saved);
+    } else {
+      setLang('en');
+      localStorage.setItem('mobile_lang', 'en');
+    }
   }, []);
 
   const changeLang = (newLang) => {
-    setLang(newLang);
-    localStorage.setItem('mobile_lang', newLang);
-
-    setTimeout(() => {
-      document.querySelectorAll('[data-i18n]').forEach(el => {
-        const key = el.getAttribute('data-i18n');
-        if (key) {
-          const section = translations[newLang] || translations['en'];
-          el.textContent = section[key] || translations['en'][key] || key;
-        }
-      });
-      document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
-        const key = el.getAttribute('data-i18n-placeholder');
-        if (key) {
-          const section = translations[newLang] || translations['en'];
-          el.setAttribute('placeholder', section[key] || translations['en'][key] || key);
-        }
-      });
-    }, 0);
+    if (translations[newLang]) {
+      setLang(newLang);
+      localStorage.setItem('mobile_lang', newLang);
+      // Force refresh if needed, but React state update should be enough
+    }
   };
 
   const loginSession = (id, name) => {
@@ -50,8 +48,9 @@ export const MobileProvider = ({ children }) => {
   };
 
   const t = (key) => {
-    const section = translations[lang] || translations['en'];
-    return section[key] || translations['en'][key] || key;
+    const section = translations[lang];
+    if (!section) return key;
+    return section[key] || key;
   };
 
   return (
