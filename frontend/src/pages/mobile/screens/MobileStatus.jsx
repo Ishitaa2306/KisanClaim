@@ -13,7 +13,11 @@ const MobileStatus = () => {
     try {
       const res = await fetch(`/api/v1/mobile/claims/${farmerId}`);
       const json = await res.json();
-      setClaims(json.data || []);
+      
+      const backendClaims = json.data || [];
+      const offlineClaims = JSON.parse(localStorage.getItem(`offline_claims_${farmerId}`) || '[]');
+      
+      setClaims([...offlineClaims, ...backendClaims]);
     } catch (err) {
       console.error('Error fetching claims:', err);
     } finally {
@@ -70,7 +74,10 @@ const MobileStatus = () => {
                     onClick={() => navigate(`/mobile/details/${item.claimId}`)}
                     className="hover:bg-gray-50 cursor-pointer transition-colors"
                   >
-                    <td className="px-6 py-4 font-mono font-medium text-gray-900">{item.claimId}</td>
+                    <td className="px-6 py-4 font-mono font-medium text-gray-900">
+                      {item.claimId}
+                      {item.isOffline && <span className="ml-2 text-[10px] bg-yellow-100 text-yellow-800 px-1.5 py-0.5 rounded uppercase font-bold" data-i18n="offline_badge">Offline</span>}
+                    </td>
                     <td className="px-6 py-4 text-gray-700" data-i18n={item.damageType?.toLowerCase().replace(' ', '_')}>
                       {t(item.damageType?.toLowerCase().replace(' ', '_') || item.damageType)}
                     </td>

@@ -1,5 +1,6 @@
 import React from 'react'
 import { Link, useLocation } from 'react-router-dom'
+import { User } from 'lucide-react'
 import { cn } from '../../lib/utils'
 
 export function Navbar() {
@@ -40,8 +41,8 @@ export function Navbar() {
         <span className="text-xs font-semibold text-slate-400 tracking-wider">
           SATELLITE-VERIFIED CROP INSURANCE
         </span>
-        <div className="w-8 h-8 rounded-full bg-slate-200 overflow-hidden border border-slate-300">
-          <img src="https://i.pravatar.cc/150?img=11" alt="User" className="w-full h-full object-cover" />
+        <div className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center border border-slate-300 text-slate-500">
+          <User size={16} />
         </div>
       </div>
     </header>

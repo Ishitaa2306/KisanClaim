@@ -13,6 +13,29 @@ const MobileClaim = () => {
   const [errorVisible, setErrorVisible] = useState(null);
   const [selectedFile, setSelectedFile] = useState(null);
   const [previewUrl, setPreviewUrl] = useState(null);
+  const [isOffline, setIsOffline] = useState(!navigator.onLine);
+  const [offlineResult, setOfflineResult] = useState(null);
+
+  useEffect(() => {
+    const handleOnline = () => setIsOffline(false);
+    const handleOffline = () => setIsOffline(true);
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+    };
+  }, []);
+
+  const getOfflineDecision = (type, desc) => {
+    const text = `${type} ${desc}`.toLowerCase();
+    if (text.includes('severe') || text.includes('destroyed') || text.includes('flood') || text.includes('critical')) {
+      return { status: 'Approved', confidence: 'High', reason: 'High severity keywords detected.' };
+    } else if (text.includes('moderate') || text.includes('drought') || text.includes('medium') || text.includes('partial')) {
+      return { status: 'Review', confidence: 'Medium', reason: 'Requires manual verification.' };
+    }
+    return { status: 'Rejected', confidence: 'Low', reason: 'Damage does not meet minimum severity.' };
+  };
 
   useEffect(() => {
     const fetchFarmer = async () => {
@@ -45,6 +68,32 @@ const MobileClaim = () => {
       let imageUrls = ["https://images.unsplash.com/photo-1583245553131-0e7d36409271"]; // Default fallback
       const farmId = data?.linkedFarmIds?.[0] || 'NEW-REG';
 
+      if (!navigator.onLine) {
+        // OFFLINE MODE
+        const decision = getOfflineDecision(damageType, description);
+        const newClaim = {
+          claimId: 'OFF-' + Math.floor(10000 + Math.random() * 90000),
+          farmerId,
+          farmId,
+          damageType,
+          description,
+          claimAmount: 0,
+          createdAt: new Date().toISOString(),
+          status: decision.status,
+          isOffline: true,
+          offlineReason: decision.reason
+        };
+
+        const existingClaims = JSON.parse(localStorage.getItem(`offline_claims_${farmerId}`) || '[]');
+        existingClaims.push(newClaim);
+        localStorage.setItem(`offline_claims_${farmerId}`, JSON.stringify(existingClaims));
+        
+        setOfflineResult(newClaim);
+        setSubmitting(false);
+        return;
+      }
+
+      // ONLINE MODE
       // 1. Upload the image if selected
       if (selectedFile) {
         const formData = new FormData();
@@ -98,8 +147,18 @@ const MobileClaim = () => {
         <p className="text-sm text-gray-500 mt-1" data-i18n="file_claim_desc">{t('file_claim_desc')}</p>
       </div>
 
-      <div className="max-w-2xl bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+      <div className="max-w-2xl bg-white rounded-lg shadow-sm border border-gray-200 p-6 relative">
         
+        {isOffline && (
+          <div className="mb-6 p-4 bg-yellow-50 border border-yellow-200 rounded-md flex items-start gap-3">
+            <AlertCircle className="text-yellow-600 shrink-0 mt-0.5" size={18} />
+            <div>
+              <p className="text-sm font-bold text-yellow-800">Offline Mode Active</p>
+              <p className="text-xs text-yellow-700 mt-1">Claims submitted now will be stored locally and given an instant estimate.</p>
+            </div>
+          </div>
+        )}
+
         {errorVisible && (
           <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-md flex items-start gap-3">
             <AlertCircle className="text-red-500 shrink-0 mt-0.5" size={18} />
@@ -185,6 +244,35 @@ const MobileClaim = () => {
           </div>
         </form>
       </div>
+      {offlineResult && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-xl shadow-xl max-w-sm w-full p-6 text-center">
+            <div className={`w-16 h-16 rounded-full mx-auto flex items-center justify-center mb-4 ${
+              offlineResult.status === 'Approved' ? 'bg-green-100 text-green-600' :
+              offlineResult.status === 'Review' ? 'bg-yellow-100 text-yellow-600' :
+              'bg-red-100 text-red-600'
+            }`}>
+              <AlertCircle size={32} />
+            </div>
+            <h2 className="text-xl font-bold text-gray-900 mb-2">Instant Decision (Offline Estimate)</h2>
+            <p className="text-gray-600 text-sm mb-6">{offlineResult.offlineReason}</p>
+            <div className="bg-gray-50 rounded-lg p-4 mb-6">
+              <span className="text-xs text-gray-500 uppercase tracking-wider font-bold block mb-1">Estimated Status</span>
+              <span className={`text-lg font-black uppercase ${
+                offlineResult.status === 'Approved' ? 'text-green-600' :
+                offlineResult.status === 'Review' ? 'text-yellow-600' :
+                'text-red-600'
+              }`}>{offlineResult.status}</span>
+            </div>
+            <button
+              onClick={() => navigate('/mobile/status')}
+              className="w-full py-3 bg-green-600 text-white font-semibold rounded-md shadow-sm hover:bg-green-700 transition"
+            >
+              Go to Claims Status
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

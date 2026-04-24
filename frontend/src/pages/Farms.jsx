@@ -153,7 +153,9 @@ export default function Farms() {
                   <td className="py-4 px-6 text-sm font-semibold text-blue-600">{farm.farmId}</td>
                   <td className="py-4 px-6">
                     <div className="flex items-center gap-3">
-                      <img src={`https://i.pravatar.cc/150?img=${(i % 50)+1}`} alt={farm.farmerName} className="w-8 h-8 rounded-full object-cover shadow-sm" />
+                      <div className="w-8 h-8 rounded-full bg-blue-50 border border-blue-100 flex items-center justify-center shadow-sm text-blue-700 font-bold text-sm shrink-0">
+                        {farm.farmerName?.charAt(0) || 'U'}
+                      </div>
                       <span className="text-sm font-bold text-slate-800">{farm.farmerName}</span>
                     </div>
                   </td>
