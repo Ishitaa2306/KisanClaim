@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ImagePlus, AlertCircle } from 'lucide-react';
+import { ImagePlus, AlertCircle, ChevronLeft } from 'lucide-react';
 import { useMobile } from '../context/MobileContext';
 
 const MobileClaim = () => {
@@ -141,12 +141,22 @@ const MobileClaim = () => {
   };
 
   return (
-    <div className="w-full">
-      <div className="mb-6 pb-4 border-b border-gray-200">
-        <h1 className="text-2xl font-bold text-gray-900 leading-tight" data-i18n="file_crop_claim">{t('file_crop_claim')}</h1>
-        <p className="text-sm text-gray-500 mt-1" data-i18n="file_claim_desc">{t('file_claim_desc')}</p>
+    <div className="w-full min-h-full bg-gradient-to-b from-gray-50 to-gray-100 p-4 pb-28 font-sans">
+      
+      <div className="mb-6 mt-4 flex items-center gap-3 px-1">
+        <button 
+          onClick={() => navigate(-1)} 
+          className="w-10 h-10 bg-white border border-gray-200 rounded-full flex items-center justify-center shadow-sm active:scale-95 transition-all shrink-0"
+        >
+          <ChevronLeft size={20} className="text-gray-600" />
+        </button>
+        <div>
+          <h1 className="text-xl font-bold text-gray-900 tracking-tight leading-tight" data-i18n="file_crop_claim">{t('file_crop_claim') || 'File Claim'}</h1>
+          <p className="text-xs text-gray-500 font-medium" data-i18n="file_claim_desc">{t('file_claim_desc')}</p>
+        </div>
       </div>
 
+<<<<<<< HEAD
       <div className="max-w-2xl bg-white rounded-lg shadow-sm border border-gray-200 p-6 relative">
         
         {isOffline && (
@@ -158,41 +168,45 @@ const MobileClaim = () => {
             </div>
           </div>
         )}
+=======
+      <div className="bg-white rounded-[16px] shadow-[0_4px_15px_rgb(0,0,0,0.02)] border border-gray-100 p-5 relative overflow-hidden">
+        
+        {/* Background Decorative Blur */}
+        <div className="absolute -top-10 -right-10 w-32 h-32 bg-green-500/5 rounded-full blur-2xl"></div>
+>>>>>>> c6d385f (changes in ui)
 
         {errorVisible && (
-          <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-md flex items-start gap-3">
+          <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-xl flex items-start gap-3 relative z-10">
             <AlertCircle className="text-red-500 shrink-0 mt-0.5" size={18} />
-            <p className="text-sm text-red-700">{errorVisible}</p>
+            <p className="text-sm font-bold text-red-700">{errorVisible}</p>
           </div>
         )}
 
-        <form onSubmit={handleSubmit} className="space-y-6">
+        <form onSubmit={handleSubmit} className="space-y-6 relative z-10">
           <div>
-            <label className="block text-sm font-semibold text-gray-800 mb-2">{t('damage_type')}</label>
+            <label className="block text-xs font-bold text-gray-800 uppercase tracking-widest mb-2">{t('damage_type') || 'Damage Type'}</label>
             <input 
               type="text" 
-              placeholder={t('damage_type_placeholder')}
-              data-i18n-placeholder="damage_type_placeholder"
-              className="w-full bg-white border border-gray-300 rounded-md py-2 px-3 text-sm text-gray-900 outline-none focus:border-green-500 focus:ring-1 focus:ring-green-500 transition-shadow"
+              placeholder={t('damage_type_placeholder') || 'e.g. Flood, Pest, Drought'}
+              className="w-full bg-gray-50 border border-gray-200 rounded-xl py-3 px-4 text-sm font-bold text-gray-900 outline-none focus:border-green-500 focus:bg-white focus:ring-2 focus:ring-green-500/20 transition-all shadow-inner"
               value={damageType}
               onChange={(e) => setDamageType(e.target.value)}
             />
           </div>
 
           <div>
-            <label className="block text-sm font-semibold text-gray-800 mb-2">{t('description')} (Optional)</label>
+            <label className="block text-xs font-bold text-gray-800 uppercase tracking-widest mb-2">{t('description') || 'Description'} (Optional)</label>
             <textarea 
-              placeholder={t('description_placeholder')}
-              data-i18n-placeholder="description_placeholder"
+              placeholder={t('description_placeholder') || 'Provide details...'}
               rows="4"
-              className="w-full bg-white border border-gray-300 rounded-md py-2 px-3 text-sm text-gray-900 outline-none focus:border-green-500 focus:ring-1 focus:ring-green-500 transition-shadow resize-y"
+              className="w-full bg-gray-50 border border-gray-200 rounded-xl py-3 px-4 text-sm font-bold text-gray-900 outline-none focus:border-green-500 focus:bg-white focus:ring-2 focus:ring-green-500/20 transition-all resize-none shadow-inner"
               value={description}
               onChange={(e) => setDescription(e.target.value)}
             />
           </div>
 
           <div>
-            <label className="block text-sm font-semibold text-gray-800 mb-2">{t('upload_images')}</label>
+            <label className="block text-xs font-bold text-gray-800 uppercase tracking-widest mb-2">{t('upload_images') || 'Upload Evidence'}</label>
             <input 
               type="file" 
               id="evidence-upload" 
@@ -203,43 +217,36 @@ const MobileClaim = () => {
             <button 
               type="button"
               onClick={handleImageUpload}
-              className={`w-full ${previewUrl ? 'bg-green-50 border-green-200' : 'bg-gray-50 border-gray-300'} border-2 border-dashed rounded-lg p-6 flex flex-col items-center justify-center hover:bg-gray-100 hover:border-gray-400 transition-colors group relative overflow-hidden`}
+              className={`w-full ${previewUrl ? 'bg-green-50 border-green-300' : 'bg-gray-50 border-gray-200'} border-2 border-dashed rounded-xl p-6 flex flex-col items-center justify-center hover:bg-gray-100 transition-colors group relative overflow-hidden`}
             >
               {previewUrl ? (
                 <div className="flex flex-col items-center">
-                  <div className="w-24 h-24 rounded-lg overflow-hidden mb-2 border border-green-200">
+                  <div className="w-20 h-20 rounded-xl overflow-hidden mb-3 border-2 border-green-400 shadow-md">
                     <img src={previewUrl} alt="Preview" className="w-full h-full object-cover" />
                   </div>
-                  <span className="text-xs font-bold text-green-700 uppercase tracking-wider" data-i18n="image_selected">{t('image_selected')}</span>
+                  <span className="text-[10px] font-black text-green-700 uppercase tracking-widest">{t('image_selected') || 'Image Selected'}</span>
                 </div>
               ) : (
                 <>
-                  <div className="p-3 bg-white rounded-full shadow-sm mb-3 group-hover:scale-105 transition-transform">
-                    <ImagePlus className="text-gray-500" size={24} />
+                  <div className="w-12 h-12 bg-white rounded-full shadow-sm mb-3 flex items-center justify-center group-hover:scale-105 group-hover:shadow-md transition-all">
+                    <ImagePlus className="text-gray-400 group-hover:text-green-500 transition-colors" size={20} />
                   </div>
-                  <span className="text-sm text-gray-600 font-medium" data-i18n="click_to_upload">{t('click_to_upload')}</span>
-                  <span className="text-xs text-gray-400 mt-1" data-i18n="upload_limits">{t('upload_limits')}</span>
+                  <span className="text-xs font-bold text-gray-600 mb-1 leading-none">{t('click_to_upload') || 'Click to Upload'}</span>
+                  <span className="text-[10px] font-medium text-gray-400 leading-none">{t('upload_limits') || 'Max 5MB (JPG, PNG)'}</span>
                 </>
               )}
             </button>
           </div>
 
-          <div className="pt-4 border-t border-gray-100 flex justify-end gap-3">
-            <button 
-              type="button"
-              onClick={() => navigate('/mobile/home')}
-              className="px-5 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
-            >
-              <span data-i18n="cancel">{t('cancel')}</span>
-            </button>
+          <div className="pt-2">
             <button 
               type="submit"
               disabled={submitting}
-              className="px-6 py-2 text-sm font-medium text-white bg-green-600 rounded-md shadow-sm hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 disabled:opacity-75 disabled:cursor-not-allowed flex items-center justify-center min-w-[120px]"
+              className="w-full py-3.5 text-sm font-black text-white uppercase tracking-widest bg-green-600 rounded-xl shadow-[0_4px_15px_rgba(22,163,74,0.3)] hover:bg-green-700 active:scale-[0.98] transition-all disabled:opacity-75 disabled:cursor-not-allowed flex items-center justify-center"
             >
               {submitting ? (
-                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-              ) : t('submit')}
+                <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
+              ) : t('submit') || 'Submit Claim'}
             </button>
           </div>
         </form>

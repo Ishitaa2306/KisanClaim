@@ -418,4 +418,57 @@ router.get('/history/:farmerId', async (req, res) => {
   }
 });
 
+// ═══════════════════════════════════════════════════════════════
+//  AI CROP ADVISOR
+// ═══════════════════════════════════════════════════════════════
+
+router.post('/analyze-crop', upload.single('image'), async (req, res) => {
+  try {
+    if (!req.file) {
+      return new ApiResponse(400, 'Crop image is required').send(res);
+    }
+
+    // Simulated AI Logic
+    const diseases = [
+      { 
+        disease: 'Healthy', 
+        severity: 'Green', 
+        suggestions: ['Crop condition is good', 'Maintain current irrigation', 'Monitor for any color changes'] 
+      },
+      { 
+        disease: 'Leaf Blight', 
+        severity: 'Yellow', 
+        suggestions: ['Remove affected leaves', 'Apply fungicide if spreading', 'Avoid overhead watering'] 
+      },
+      { 
+        disease: 'Pest Attack', 
+        severity: 'Red', 
+        suggestions: ['Use organic pesticide', 'Inspect affected areas', 'Isolate infested plants'] 
+      },
+      { 
+        disease: 'Nitrogen Deficiency', 
+        severity: 'Yellow', 
+        suggestions: ['Apply nitrogen-rich fertilizer', 'Improve soil nutrients', 'Check soil pH levels'] 
+      }
+    ];
+
+    const result = diseases[Math.floor(Math.random() * diseases.length)];
+    const confidence = Math.floor(Math.random() * (95 - 70 + 1)) + 70;
+
+    // Simulate processing time
+    await new Promise(resolve => setTimeout(resolve, 2000));
+
+    new ApiResponse(200, 'Crop analysis complete', {
+      disease: result.disease,
+      severity: result.severity,
+      confidence: `${confidence}%`,
+      suggestions: result.suggestions
+    }).send(res);
+
+  } catch (err) {
+    console.error('[API] POST /analyze-crop error:', err.message);
+    new ApiResponse(500, 'Internal server error').send(res);
+  }
+});
+
 module.exports = router;

@@ -1,6 +1,6 @@
 import React from 'react';
 import { Routes, Route, useNavigate, useLocation, Navigate } from 'react-router-dom';
-import { Home, LayoutGrid, FileText, CheckCircle, Settings, Menu } from 'lucide-react';
+import { Home, LayoutGrid, FileText, CheckCircle, Settings, CloudRain, Mic } from 'lucide-react';
 import { MobileProvider, useMobile } from './context/MobileContext';
 
 // Screens
@@ -13,74 +13,72 @@ import MobileWeather from './screens/MobileWeather';
 import MobileSettings from './screens/MobileSettings';
 import MobileNotifications from './screens/MobileNotifications';
 import MobileLogin from './screens/MobileLogin';
+import MobileLanding from './screens/MobileLanding';
 
 const PrivateRoute = ({ children }) => {
   const { farmerId } = useMobile();
-  if (!farmerId) return <Navigate to="/mobile/login" replace />;
+  if (!farmerId) return <Navigate to="/mobile/landing" replace />;
   return children;
 };
 
-const SidebarNav = () => {
+const BottomTabBar = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { t, farmerName } = useMobile();
+  const { t } = useMobile();
 
-  // Hide sidebar entirely on login screen
-  if (location.pathname === '/mobile/login') return null;
+  // Hide tab bar entirely on login screen
+  if (location.pathname === '/mobile/login' || location.pathname === '/mobile/landing' || location.pathname === '/mobile') return null;
 
   const tabs = [
-    { name: t('home'), path: '/mobile/home', icon: Home },
-    { name: t('farm'), path: '/mobile/farm', icon: LayoutGrid },
-    { name: t('file_claim'), path: '/mobile/claim', icon: FileText },
-    { name: t('status'), path: '/mobile/status', icon: CheckCircle },
-    { name: t('settings'), path: '/mobile/settings', icon: Settings },
+    { name: t('home') || 'Home', path: '/mobile/home', icon: Home },
+    { name: t('farm') || 'Farm', path: '/mobile/farm', icon: LayoutGrid },
+    { name: t('file_claim') || 'Claims', path: '/mobile/status', icon: CheckCircle }, // Status/Claims list is more useful here than file claim
+    { name: t('weather') || 'Weather', path: '/mobile/weather', icon: CloudRain },
+    { name: t('settings') || 'Settings', path: '/mobile/settings', icon: Settings },
   ];
 
   return (
-    <div className="w-64 h-full bg-white border-r border-gray-200 flex flex-col hidden md:flex shrink-0">
-      <div className="p-6 border-b border-gray-100 mb-4 flex items-center gap-2">
-        <div className="w-8 h-8 bg-green-600 rounded-lg flex items-center justify-center">
-          <span className="text-white font-bold text-lg">K</span>
-        </div>
-        <span className="font-bold text-xl text-gray-900 tracking-tight">KisanClaim</span>
-      </div>
-      <div className="flex-1 px-4 space-y-1">
-        {tabs.map((tab) => {
-          const isActive = location.pathname.startsWith(tab.path);
-          const Icon = tab.icon;
-          return (
-            <button 
-              key={tab.name}
-              onClick={() => navigate(tab.path)}
-              className={`flex items-center gap-3 w-full px-4 py-3 rounded-md transition-colors font-medium text-sm ${isActive ? 'bg-green-50 text-green-700' : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'}`}
-            >
-              <Icon size={20} className={isActive ? 'opacity-100' : 'opacity-70'} />
-              <span>{tab.name}</span>
-            </button>
-          );
-        })}
-      </div>
-      <div className="p-4 border-t border-gray-100">
-        <div className="bg-gray-50 rounded-lg p-3 flex items-center gap-3 overflow-hidden cursor-pointer hover:bg-gray-100 transition" onClick={() => navigate('/mobile/settings')}>
-          <div className="w-8 h-8 rounded-full bg-green-100 flex items-center justify-center text-green-700 font-bold shrink-0">{farmerName.charAt(0) || 'F'}</div>
-          <div className="min-w-0">
-            <p className="text-xs font-bold text-gray-900 truncate">{farmerName || t('farmer_portal')}</p>
-            <p className="text-[10px] text-gray-500 truncate" data-i18n="authenticated">{t('authenticated')}</p>
-          </div>
-        </div>
-      </div>
+    <div className="absolute bottom-0 w-full bg-white/90 backdrop-blur-lg border-t border-gray-100 pb-safe pt-1 px-4 flex justify-between items-center z-50 shadow-[0_-4px_10px_rgba(0,0,0,0.03)] rounded-t-[24px]">
+      {tabs.map((tab) => {
+        const isActive = location.pathname.startsWith(tab.path);
+        const Icon = tab.icon;
+        
+        const path = tab.path === '/mobile/weather' ? '/mobile/weather/Pune' : tab.path;
+
+        return (
+          <button 
+            key={tab.name}
+            onClick={() => navigate(path)}
+            className="flex flex-col items-center justify-center w-14 h-14 relative group"
+          >
+            <div className={`flex flex-col items-center justify-center transition-all duration-300 ${isActive ? '-translate-y-1' : ''}`}>
+              <div className={`p-1.5 rounded-xl transition-colors duration-300 ${isActive ? 'bg-green-50 text-green-600' : 'text-gray-400 group-hover:text-gray-600'}`}>
+                <Icon size={isActive ? 22 : 20} strokeWidth={isActive ? 2.5 : 2} />
+              </div>
+              <span className={`text-[9px] font-bold mt-0.5 transition-colors duration-300 ${isActive ? 'text-green-600 opacity-100' : 'text-gray-400 opacity-0'}`}>
+                {tab.name}
+              </span>
+            </div>
+            {isActive && (
+              <span className="absolute -bottom-1 w-1 h-1 bg-green-600 rounded-full" />
+            )}
+          </button>
+        );
+      })}
     </div>
   );
 };
 
 const MobileAppRouter = () => {
+  const location = useLocation();
   return (
-    <div className="flex-1 h-full overflow-y-auto bg-gray-50 relative">
-      <div className="max-w-6xl mx-auto p-4 md:p-8 w-full h-full pb-20">
+    <div className="flex-1 h-full overflow-y-auto bg-gradient-to-b from-gray-50 to-gray-100 relative pb-28">
+      <div className="w-full h-full">
         <Routes>
+          <Route path="landing" element={<MobileLanding />} />
           <Route path="login" element={<MobileLogin />} />
           
-          <Route path="/" element={<Navigate to="home" replace />} />
+          <Route path="/" element={<Navigate to="landing" replace />} />
           <Route path="home" element={<PrivateRoute><MobileHome /></PrivateRoute>} />
           <Route path="farm" element={<PrivateRoute><MobileFarm /></PrivateRoute>} />
           <Route path="claim" element={<PrivateRoute><MobileClaim /></PrivateRoute>} />
@@ -92,32 +90,33 @@ const MobileAppRouter = () => {
         </Routes>
       </div>
 
-      {/* Floating Voice Assistant Button */}
-      {!location.pathname.includes('/mobile/login') && (
-        <button 
-          onClick={() => alert("Voice assistant coming soon")}
-          className="absolute bottom-6 right-6 w-14 h-14 bg-green-600 rounded-full flex items-center justify-center shadow-lg hover:bg-green-700 hover:scale-105 transition-all text-white z-50 border-[3px] border-white ring-2 ring-green-600/20"
-        >
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"/>
-            <path d="M19 10v2a7 7 0 0 1-14 0v-2"/>
-            <line x1="12" x2="12" y1="19" y2="22"/>
-          </svg>
-        </button>
-      )}
+      {/* Voice Assistant placeholder logic removed from here as it's now in the container */}
     </div>
   );
 };
 
 export const MobileContainer = () => {
   const location = useLocation();
-  const isLogin = location.pathname.includes('/mobile/login');
+  const isAuthScreen = location.pathname.includes('/mobile/login') || location.pathname.includes('/mobile/landing') || location.pathname === '/mobile' || location.pathname === '/mobile/';
 
   return (
     <MobileProvider>
-      <div className="w-full h-screen flex bg-gray-50 overflow-hidden font-sans">
-        {!isLogin && <SidebarNav />}
-        <MobileAppRouter />
+      <div className="w-full h-screen flex justify-center bg-gray-900 font-sans">
+        <div className="w-full max-w-md h-full bg-white relative shadow-2xl flex flex-col overflow-hidden sm:rounded-[32px] sm:h-[95vh] sm:my-auto sm:border-[8px] sm:border-gray-800 ring-1 ring-gray-200">
+          <MobileAppRouter />
+          {!isAuthScreen && (
+            <>
+              <BottomTabBar />
+              {/* Fixed Voice Assistant Button - Positioned above Nav Bar and aligned with Settings icon */}
+              <button 
+                onClick={() => alert("Voice assistant coming soon")}
+                className="absolute bottom-20 right-5 w-12 h-12 bg-gradient-to-tr from-green-600 to-green-500 rounded-full flex items-center justify-center shadow-[0_8px_25px_rgba(22,163,74,0.3)] hover:scale-110 active:scale-90 transition-all text-white z-[60] border-[2px] border-white/80 backdrop-blur-md"
+              >
+                <Mic size={20} strokeWidth={2.5} />
+              </button>
+            </>
+          )}
+        </div>
       </div>
     </MobileProvider>
   );
