@@ -133,5 +133,12 @@ export const api = {
    */
   getFarmImages: async (id) => {
     return fetchApi(`/api/farm/${id}/images`);
+  },
+
+  /**
+   * Get payment status for a specific claim (simulated tracking)
+   */
+  getPaymentStatus: async (claimId) => {
+    return fetchApi(`/api/payment-status/${claimId}`);
   }
 };

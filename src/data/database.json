@@ -14644,7 +14644,8 @@
       "explanation.decision": "Approved",
       "explanation.reason": "Claim verified. NDVI drop and field data match reported damage.",
       "claimIds": [
-        "CLM-00026"
+        "CLM-00026",
+        "CLM-00028"
       ]
     },
     {
@@ -18273,7 +18274,9 @@
         }
       ],
       "createdAt": "2026-04-23T11:54:32.323Z",
-      "updatedAt": "2026-04-23T11:54:32.323Z"
+      "updatedAt": "2026-04-23T11:54:32.323Z",
+      "paymentStatus": "COMPLETED",
+      "paymentUpdatedAt": "2026-04-24T07:53:00.996Z"
     },
     {
       "claimId": "CLM-00026",
@@ -18324,7 +18327,9 @@
         }
       ],
       "createdAt": "2026-04-23T14:26:59.806Z",
-      "updatedAt": "2026-04-23T14:26:59.806Z"
+      "updatedAt": "2026-04-23T14:26:59.806Z",
+      "paymentStatus": "COMPLETED",
+      "paymentUpdatedAt": "2026-04-24T07:51:35.603Z"
     },
     {
       "claimId": "CLM-00027",
@@ -18376,6 +18381,57 @@
       ],
       "createdAt": "2026-04-23T19:05:54.096Z",
       "updatedAt": "2026-04-23T19:05:54.096Z"
+    },
+    {
+      "claimId": "CLM-00028",
+      "farmerId": "FMR-943F1A33",
+      "farmerName": "Manoj Rajput",
+      "farmId": "KCF-1601",
+      "damageType": "floood",
+      "description": "floood damage reported for Wheat",
+      "images": [
+        "https://images.unsplash.com/photo-1583245553131-0e7d36409271"
+      ],
+      "status": "Pending",
+      "claimAmount": 175819,
+      "ndviAnalysis": {
+        "ndviBefore": 0.71,
+        "ndviAfter": 0.31,
+        "ndviDrop": 56.3,
+        "damageLevel": "severe"
+      },
+      "fraudAnalysis": {
+        "fraudScore": 39,
+        "fraudRisk": "medium",
+        "flags": []
+      },
+      "explanation": {
+        "ndviDrop": 56.3,
+        "damageLevel": "severe",
+        "fraudScore": 39,
+        "fraudRisk": "medium",
+        "reason": "Claim verified. NDVI drop and field data match reported damage.",
+        "decision": "Approved"
+      },
+      "timeline": [
+        {
+          "action": "Claim Submitted",
+          "timestamp": "2026-04-24T08:37:49.797Z",
+          "detail": "Damage type: floood"
+        },
+        {
+          "action": "Identity Verified",
+          "timestamp": "2026-04-24T08:37:49.797Z",
+          "detail": "Farmer: Manoj Rajput"
+        },
+        {
+          "action": "Automated NDVI Check",
+          "timestamp": "2026-04-24T08:37:49.797Z",
+          "detail": "Estimated Drop: 56.3%"
+        }
+      ],
+      "createdAt": "2026-04-24T08:37:49.797Z",
+      "updatedAt": "2026-04-24T08:37:49.797Z"
     }
   ],
   "notifications": [
@@ -20210,6 +20266,14 @@
       "message": "Your claim CLM-00027 has been submitted. Estimated amount: ₹35,081.",
       "read": false,
       "timestamp": "2026-04-23T19:05:54.197Z"
+    },
+    {
+      "notificationId": "df0614ef-5047-45f0-859d-e0199b7080b0",
+      "farmerId": "FMR-943F1A33",
+      "type": "claim_update",
+      "message": "Your claim CLM-00028 has been submitted. Estimated amount: ₹175,819.",
+      "read": false,
+      "timestamp": "2026-04-24T08:37:49.861Z"
     }
   ],
   "activities": [
@@ -20228,6 +20292,14 @@
       "farmId": "KCF-2419",
       "farmerId": "FMR-6E1EF639",
       "timestamp": "2026-04-23T19:05:54.211Z"
+    },
+    {
+      "activityId": "608fbc22-72ad-4d16-b3a1-0a7e73c7ddd8",
+      "type": "claim_submitted",
+      "desc": "New claim CLM-00028 by Manoj Rajput — floood (severe)",
+      "farmId": "KCF-1601",
+      "farmerId": "FMR-943F1A33",
+      "timestamp": "2026-04-24T08:37:49.871Z"
     }
   ],
   "weather": [
@@ -20369,7 +20441,7 @@
     }
   ],
   "counters": {
-    "claim": 27
+    "claim": 28
   },
   "images": []
 }

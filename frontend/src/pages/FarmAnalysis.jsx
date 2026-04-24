@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { Card } from '../components/ui/Card'
 import { Badge } from '../components/ui/Badge'
-import { MapPin, TrendingUp, ShieldCheck, Tractor, Bot, Loader2, AlertTriangle, FileText, Activity, Thermometer, CloudRain, Droplets, Calendar, Zap, AlertCircle, Camera, Clock, Smartphone } from 'lucide-react'
+import { MapPin, TrendingUp, ShieldCheck, Tractor, Bot, Loader2, AlertTriangle, FileText, Activity, Thermometer, CloudRain, Droplets, Calendar, Zap, AlertCircle, Camera, Clock, Smartphone, Banknote, CheckCircle2, AlertOctagon, TimerReset } from 'lucide-react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { LineChart, Line, XAxis, Tooltip, ResponsiveContainer, CartesianGrid, AreaChart, Area, YAxis } from 'recharts'
 import { api } from '../services/api'
@@ -27,6 +27,8 @@ export default function FarmAnalysis() {
   const [error, setError] = useState(null);
   const [beforeLoadError, setBeforeLoadError] = useState(false);
   const [afterLoadError, setAfterLoadError] = useState(false);
+  const [paymentStatus, setPaymentStatus] = useState(null);
+  const [paymentLoading, setPaymentLoading] = useState(false);
 
   useEffect(() => {
     async function loadFarm() {
@@ -71,6 +73,44 @@ export default function FarmAnalysis() {
       loadGroundEvidence();
     }
   }, [id]);
+
+  // ── Payment Status: fetch for the first claim linked to this farm ──
+  useEffect(() => {
+    if (!farm) return;
+    const decision = farm.explanation?.decision;
+    if (decision !== 'Approved') {
+      setPaymentStatus(null);
+      return;
+    }
+
+    let cancelled = false;
+    async function loadPaymentStatus() {
+      try {
+        setPaymentLoading(true);
+        // Fetch all claims to find the one linked to this farm
+        const claims = await api.getClaims();
+        const farmClaim = (claims || []).find(c => c.farmId === farm.farmId && c.status === 'Approved');
+        if (!farmClaim || cancelled) return;
+
+        const result = await api.getPaymentStatus(farmClaim.claimId);
+        if (!cancelled) setPaymentStatus(result);
+      } catch (err) {
+        console.error('Payment status fetch failed:', err);
+      } finally {
+        if (!cancelled) setPaymentLoading(false);
+      }
+    }
+
+    loadPaymentStatus();
+
+    // Auto-refresh while payment is still in-flight
+    const interval = setInterval(() => {
+      if (paymentStatus?.status === 'COMPLETED') return;
+      loadPaymentStatus();
+    }, 15000);
+
+    return () => { cancelled = true; clearInterval(interval); };
+  }, [farm, farm?.explanation?.decision]);
 
   if (loading) {
     return (
@@ -521,6 +561,169 @@ export default function FarmAnalysis() {
           </div>
         </div>
       </div>
+
+      {/* ── Payment Status Tracking Card (only for Approved claims) ──────── */}
+      {farm.explanation?.decision === 'Approved' && (
+        <div className="mt-8 animate-in fade-in slide-in-from-bottom-2 duration-500">
+          <Card className="p-0 overflow-hidden border border-slate-200 shadow-sm">
+            {/* Card Header */}
+            <div className="flex items-center justify-between px-8 py-5 bg-gradient-to-r from-slate-50 to-white border-b border-slate-100">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-blue-100 flex items-center justify-center">
+                  <Banknote className="w-5 h-5 text-blue-600" />
+                </div>
+                <div>
+                  <h3 className="text-lg font-bold text-slate-800 tracking-tight">Payment Status</h3>
+                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Insurance Payout Tracking</p>
+                </div>
+              </div>
+
+              {/* Status Badge */}
+              {paymentLoading && !paymentStatus ? (
+                <Loader2 className="w-5 h-5 animate-spin text-slate-400" />
+              ) : paymentStatus ? (
+                <span className={`inline-flex items-center gap-2 px-4 py-2 rounded-full text-xs font-bold uppercase tracking-widest border ${
+                  paymentStatus.status === 'COMPLETED'
+                    ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                    : paymentStatus.status === 'PROCESSING'
+                    ? 'bg-blue-50 text-blue-700 border-blue-200'
+                    : paymentStatus.status === 'DELAYED'
+                    ? 'bg-red-50 text-red-700 border-red-200'
+                    : 'bg-slate-50 text-slate-500 border-slate-200'
+                }`}>
+                  {paymentStatus.status === 'COMPLETED' && <CheckCircle2 className="w-3.5 h-3.5" />}
+                  {paymentStatus.status === 'PROCESSING' && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
+                  {paymentStatus.status === 'DELAYED' && <AlertOctagon className="w-3.5 h-3.5" />}
+                  {paymentStatus.status === 'NOT_INITIATED' && <TimerReset className="w-3.5 h-3.5" />}
+                  {paymentStatus.status.replace('_', ' ')}
+                </span>
+              ) : null}
+            </div>
+
+            {/* Card Body */}
+            <div className="px-8 py-6">
+              {paymentStatus ? (
+                <div className="space-y-6">
+                  {/* Progress Stepper */}
+                  <div className="flex items-center gap-0">
+                    {/* Step 1: Claim Approved */}
+                    <div className="flex flex-col items-center flex-1">
+                      <div className="w-9 h-9 rounded-full bg-emerald-500 flex items-center justify-center shadow-sm shadow-emerald-200">
+                        <CheckCircle2 className="w-4.5 h-4.5 text-white" />
+                      </div>
+                      <p className="text-[9px] font-bold text-emerald-600 uppercase tracking-widest mt-2 text-center">Claim<br/>Approved</p>
+                    </div>
+
+                    {/* Connector 1→2 */}
+                    <div className={`flex-1 h-1 rounded-full -mt-5 mx-1 transition-all duration-700 ${
+                      ['PROCESSING', 'DELAYED', 'COMPLETED'].includes(paymentStatus.status)
+                        ? 'bg-gradient-to-r from-emerald-400 to-blue-400'
+                        : 'bg-slate-200'
+                    }`} />
+
+                    {/* Step 2: Payment Processing */}
+                    <div className="flex flex-col items-center flex-1">
+                      <div className={`w-9 h-9 rounded-full flex items-center justify-center shadow-sm transition-all duration-500 ${
+                        paymentStatus.status === 'PROCESSING'
+                          ? 'bg-blue-500 shadow-blue-200 animate-pulse'
+                          : ['DELAYED', 'COMPLETED'].includes(paymentStatus.status)
+                          ? 'bg-blue-500 shadow-blue-200'
+                          : 'bg-slate-200'
+                      }`}>
+                        <Banknote className={`w-4 h-4 ${paymentStatus.status === 'NOT_INITIATED' ? 'text-slate-400' : 'text-white'}`} />
+                      </div>
+                      <p className={`text-[9px] font-bold uppercase tracking-widest mt-2 text-center ${
+                        ['PROCESSING', 'DELAYED', 'COMPLETED'].includes(paymentStatus.status) ? 'text-blue-600' : 'text-slate-400'
+                      }`}>Payment<br/>Processing</p>
+                    </div>
+
+                    {/* Connector 2→3 */}
+                    <div className={`flex-1 h-1 rounded-full -mt-5 mx-1 transition-all duration-700 ${
+                      paymentStatus.status === 'DELAYED'
+                        ? 'bg-gradient-to-r from-blue-400 to-red-400'
+                        : paymentStatus.status === 'COMPLETED'
+                        ? 'bg-gradient-to-r from-blue-400 to-emerald-400'
+                        : 'bg-slate-200'
+                    }`} />
+
+                    {/* Step 3: Verification / Delayed */}
+                    <div className="flex flex-col items-center flex-1">
+                      <div className={`w-9 h-9 rounded-full flex items-center justify-center shadow-sm transition-all duration-500 ${
+                        paymentStatus.status === 'DELAYED'
+                          ? 'bg-red-500 shadow-red-200 animate-pulse'
+                          : paymentStatus.status === 'COMPLETED'
+                          ? 'bg-emerald-500 shadow-emerald-200'
+                          : 'bg-slate-200'
+                      }`}>
+                        {paymentStatus.status === 'DELAYED' ? (
+                          <AlertOctagon className="w-4 h-4 text-white" />
+                        ) : paymentStatus.status === 'COMPLETED' ? (
+                          <CheckCircle2 className="w-4 h-4 text-white" />
+                        ) : (
+                          <Clock className="w-4 h-4 text-slate-400" />
+                        )}
+                      </div>
+                      <p className={`text-[9px] font-bold uppercase tracking-widest mt-2 text-center ${
+                        paymentStatus.status === 'DELAYED' ? 'text-red-600' : paymentStatus.status === 'COMPLETED' ? 'text-emerald-600' : 'text-slate-400'
+                      }`}>{paymentStatus.status === 'DELAYED' ? 'Payment\nDelayed' : 'Verification\nComplete'}</p>
+                    </div>
+
+                    {/* Connector 3→4 */}
+                    <div className={`flex-1 h-1 rounded-full -mt-5 mx-1 transition-all duration-700 ${
+                      paymentStatus.status === 'COMPLETED' ? 'bg-emerald-400' : 'bg-slate-200'
+                    }`} />
+
+                    {/* Step 4: Disbursed */}
+                    <div className="flex flex-col items-center flex-1">
+                      <div className={`w-9 h-9 rounded-full flex items-center justify-center shadow-sm transition-all duration-500 ${
+                        paymentStatus.status === 'COMPLETED'
+                          ? 'bg-emerald-500 shadow-emerald-200'
+                          : 'bg-slate-200'
+                      }`}>
+                        <CheckCircle2 className={`w-4.5 h-4.5 ${paymentStatus.status === 'COMPLETED' ? 'text-white' : 'text-slate-400'}`} />
+                      </div>
+                      <p className={`text-[9px] font-bold uppercase tracking-widest mt-2 text-center ${
+                        paymentStatus.status === 'COMPLETED' ? 'text-emerald-600' : 'text-slate-400'
+                      }`}>Funds<br/>Disbursed</p>
+                    </div>
+                  </div>
+
+                  {/* Status Detail Row */}
+                  <div className="flex items-center justify-between pt-4 border-t border-slate-100">
+                    <div className="flex items-center gap-2 text-xs text-slate-500">
+                      <Clock className="w-3.5 h-3.5" />
+                      <span className="font-medium">
+                        Last updated: {paymentStatus.lastUpdated
+                          ? new Date(paymentStatus.lastUpdated).toLocaleString('en-IN', { dateStyle: 'medium', timeStyle: 'short' })
+                          : 'N/A'}
+                      </span>
+                    </div>
+                    {paymentStatus.status === 'PROCESSING' && (
+                      <span className="text-[10px] font-bold text-blue-500 uppercase tracking-widest flex items-center gap-1">
+                        <Loader2 className="w-3 h-3 animate-spin" /> Auto-refreshing
+                      </span>
+                    )}
+                    {paymentStatus.status === 'DELAYED' && (
+                      <span className="text-[10px] font-bold text-red-500 uppercase tracking-widest flex items-center gap-1">
+                        <AlertTriangle className="w-3 h-3" /> High-risk verification in progress
+                      </span>
+                    )}
+                    {paymentStatus.status === 'COMPLETED' && (
+                      <span className="text-[10px] font-bold text-emerald-600 uppercase tracking-widest flex items-center gap-1">
+                        <CheckCircle2 className="w-3 h-3" /> Settlement complete
+                      </span>
+                    )}
+                  </div>
+                </div>
+              ) : (
+                <div className="flex items-center justify-center py-6 text-slate-400 text-sm">
+                  <Loader2 className="w-5 h-5 animate-spin mr-2" /> Loading payment information...
+                </div>
+              )}
+            </div>
+          </Card>
+        </div>
+      )}
 
       {/* Ground Evidence (Farmer Uploads) */}
       <div className="mt-8 mb-10">

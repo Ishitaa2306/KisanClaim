@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ChevronLeft, FileText, BarChart2, Activity } from 'lucide-react';
+import { ChevronLeft, FileText, BarChart2, Activity, Banknote, CheckCircle2, Loader2, AlertTriangle, Clock } from 'lucide-react';
 import { useMobile } from '../context/MobileContext';
 
 const MobileDetails = () => {
@@ -9,6 +9,8 @@ const MobileDetails = () => {
   const { t } = useMobile();
   const [claim, setClaim] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [paymentStatus, setPaymentStatus] = useState(null);
+  const [paymentLoading, setPaymentLoading] = useState(false);
 
   useEffect(() => {
     const fetchClaim = async () => {
@@ -25,6 +27,39 @@ const MobileDetails = () => {
     fetchClaim();
   }, [id]);
 
+  // ── Payment Status: fetch only for Approved claims ──
+  useEffect(() => {
+    if (!claim || claim.status !== 'Approved') {
+      setPaymentStatus(null);
+      return;
+    }
+
+    let cancelled = false;
+
+    async function fetchPayment() {
+      try {
+        setPaymentLoading(true);
+        const res = await fetch(`/api/v1/mobile/payment-status/${claim.claimId}`);
+        const json = await res.json();
+        if (!cancelled) setPaymentStatus(json.data);
+      } catch (err) {
+        console.error('Payment status fetch failed:', err);
+      } finally {
+        if (!cancelled) setPaymentLoading(false);
+      }
+    }
+
+    fetchPayment();
+
+    // Auto-refresh every 15s while still in-flight
+    const interval = setInterval(() => {
+      if (paymentStatus?.status === 'COMPLETED') return;
+      fetchPayment();
+    }, 15000);
+
+    return () => { cancelled = true; clearInterval(interval); };
+  }, [claim]);
+
   if (loading) {
     return (
       <div className="flex w-full h-64 items-center justify-center">
@@ -34,6 +69,50 @@ const MobileDetails = () => {
   }
 
   if (!claim) return <div className="p-4 text-center text-sm text-gray-500">{t('no_data')}</div>;
+
+  // Payment status helpers
+  const paymentSteps = [
+    { key: 'approved', label: 'Claim Approved' },
+    { key: 'processing', label: 'Processing' },
+    { key: 'verification', label: 'Verification' },
+    { key: 'disbursed', label: 'Disbursed' },
+  ];
+
+  const getStepState = (stepKey) => {
+    const ps = paymentStatus?.status;
+    if (!ps) return 'inactive';
+    if (stepKey === 'approved') return 'done';
+    if (stepKey === 'processing') {
+      if (ps === 'PROCESSING') return 'active';
+      if (['DELAYED', 'COMPLETED'].includes(ps)) return 'done';
+      return 'inactive';
+    }
+    if (stepKey === 'verification') {
+      if (ps === 'DELAYED') return 'delayed';
+      if (ps === 'COMPLETED') return 'done';
+      return 'inactive';
+    }
+    if (stepKey === 'disbursed') {
+      if (ps === 'COMPLETED') return 'done';
+      return 'inactive';
+    }
+    return 'inactive';
+  };
+
+  const stepStyles = {
+    done: 'bg-green-500 text-white',
+    active: 'bg-blue-500 text-white animate-pulse',
+    delayed: 'bg-red-500 text-white animate-pulse',
+    inactive: 'bg-gray-200 text-gray-400',
+  };
+
+  const connectorColor = (fromKey, toKey) => {
+    const fromState = getStepState(fromKey);
+    const toState = getStepState(toKey);
+    if (fromState === 'done' && (toState === 'done' || toState === 'active')) return 'bg-green-400';
+    if (fromState === 'done' && toState === 'delayed') return 'bg-red-400';
+    return 'bg-gray-200';
+  };
 
   return (
     <div className="w-full">
@@ -115,6 +194,107 @@ const MobileDetails = () => {
             </div>
           )}
 
+          {/* ── Payment Status Card (only for Approved claims) ── */}
+          {claim.status === 'Approved' && (
+            <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+              {/* Header */}
+              <div className="p-4 border-b border-gray-100 bg-gray-50/50 rounded-t-lg flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Banknote size={18} className="text-green-600" />
+                  <h2 className="text-sm font-semibold text-gray-800 uppercase tracking-wider">Payment Status</h2>
+                </div>
+                {paymentLoading && !paymentStatus ? (
+                  <Loader2 size={16} className="animate-spin text-gray-400" />
+                ) : paymentStatus ? (
+                  <span className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded text-xs font-semibold uppercase ring-1 ${
+                    paymentStatus.status === 'COMPLETED'
+                      ? 'bg-green-50 text-green-700 ring-green-600/20'
+                      : paymentStatus.status === 'PROCESSING'
+                      ? 'bg-blue-50 text-blue-700 ring-blue-600/20'
+                      : paymentStatus.status === 'DELAYED'
+                      ? 'bg-red-50 text-red-700 ring-red-600/20'
+                      : 'bg-gray-50 text-gray-600 ring-gray-600/20'
+                  }`}>
+                    {paymentStatus.status === 'COMPLETED' && <CheckCircle2 size={12} />}
+                    {paymentStatus.status === 'PROCESSING' && <Loader2 size={12} className="animate-spin" />}
+                    {paymentStatus.status === 'DELAYED' && <AlertTriangle size={12} />}
+                    {paymentStatus.status.replace('_', ' ')}
+                  </span>
+                ) : null}
+              </div>
+
+              {/* Body */}
+              <div className="p-5">
+                {paymentStatus ? (
+                  <div className="space-y-5">
+                    {/* Stepper */}
+                    <div className="flex items-center">
+                      {paymentSteps.map((step, idx) => (
+                        <React.Fragment key={step.key}>
+                          {/* Step circle */}
+                          <div className="flex flex-col items-center" style={{ flex: '0 0 auto' }}>
+                            <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold transition-all duration-500 ${stepStyles[getStepState(step.key)]}`}>
+                              {getStepState(step.key) === 'done' ? (
+                                <CheckCircle2 size={14} />
+                              ) : getStepState(step.key) === 'active' ? (
+                                <Loader2 size={14} className="animate-spin" />
+                              ) : getStepState(step.key) === 'delayed' ? (
+                                <AlertTriangle size={14} />
+                              ) : (
+                                <span>{idx + 1}</span>
+                              )}
+                            </div>
+                            <p className={`text-[9px] font-semibold uppercase tracking-wider mt-1.5 text-center leading-tight w-16 ${
+                              getStepState(step.key) === 'done' ? 'text-green-600'
+                              : getStepState(step.key) === 'active' ? 'text-blue-600'
+                              : getStepState(step.key) === 'delayed' ? 'text-red-600'
+                              : 'text-gray-400'
+                            }`}>{step.label}</p>
+                          </div>
+                          {/* Connector */}
+                          {idx < paymentSteps.length - 1 && (
+                            <div className={`flex-1 h-0.5 rounded-full mx-1 -mt-4 transition-all duration-700 ${connectorColor(paymentSteps[idx].key, paymentSteps[idx + 1].key)}`} />
+                          )}
+                        </React.Fragment>
+                      ))}
+                    </div>
+
+                    {/* Footer info */}
+                    <div className="flex items-center justify-between pt-3 border-t border-gray-100">
+                      <div className="flex items-center gap-1.5 text-xs text-gray-500">
+                        <Clock size={12} />
+                        <span className="font-medium">
+                          {paymentStatus.lastUpdated
+                            ? new Date(paymentStatus.lastUpdated).toLocaleString('en-IN', { dateStyle: 'medium', timeStyle: 'short' })
+                            : 'N/A'}
+                        </span>
+                      </div>
+                      {paymentStatus.status === 'PROCESSING' && (
+                        <span className="text-[10px] font-semibold text-blue-500 uppercase tracking-wider flex items-center gap-1">
+                          <Loader2 size={10} className="animate-spin" /> Live
+                        </span>
+                      )}
+                      {paymentStatus.status === 'DELAYED' && (
+                        <span className="text-[10px] font-semibold text-red-500 uppercase tracking-wider flex items-center gap-1">
+                          <AlertTriangle size={10} /> Verification pending
+                        </span>
+                      )}
+                      {paymentStatus.status === 'COMPLETED' && (
+                        <span className="text-[10px] font-semibold text-green-600 uppercase tracking-wider flex items-center gap-1">
+                          <CheckCircle2 size={10} /> Settlement complete
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                ) : (
+                  <div className="flex items-center justify-center py-4 text-gray-400 text-sm">
+                    <Loader2 size={16} className="animate-spin mr-2" /> Loading payment info...
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
         </div>
 
         {/* Right Column (Timeline) */}
@@ -147,3 +327,4 @@ const MobileDetails = () => {
 };
 
 export default MobileDetails;
+

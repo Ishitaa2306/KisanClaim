@@ -241,6 +241,21 @@ router.patch('/claim/:id', async (req, res) => {
 });
 
 // ═══════════════════════════════════════════════════════════════
+//  PAYMENT STATUS TRACKING (Read-only — NO real payment processing)
+// ═══════════════════════════════════════════════════════════════
+
+router.get('/payment-status/:claimId', async (req, res) => {
+  try {
+    const result = await appStore.getPaymentStatus(req.params.claimId);
+    if (!result) return new ApiResponse(404, 'Claim not found').send(res);
+    new ApiResponse(200, 'Payment status retrieved', result).send(res);
+  } catch (err) {
+    console.error('[API] GET /payment-status/:claimId error:', err.message);
+    new ApiResponse(500, 'Internal server error').send(res);
+  }
+});
+
+// ═══════════════════════════════════════════════════════════════
 //  WEATHER (Real-time via OpenWeatherMap, fallback to seeded)
 // ═══════════════════════════════════════════════════════════════
 

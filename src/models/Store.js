@@ -306,6 +306,16 @@ const appStore = {
     claim.updatedAt = now;
     claim.explanation.decision = status;
 
+    // ── Payment Status: auto-set to PROCESSING when approved ──
+    if (status === 'Approved') {
+      claim.paymentStatus = 'PROCESSING';
+      claim.paymentUpdatedAt = now;
+    } else {
+      // Non-approved statuses reset payment tracking
+      claim.paymentStatus = 'NOT_INITIATED';
+      claim.paymentUpdatedAt = now;
+    }
+
     claim.timeline.push({
       action: `Claim ${status}`,
       timestamp: now,
@@ -508,6 +518,87 @@ const appStore = {
       createdAt: c.createdAt, processedAt: c.processedAt || null,
     }));
   },
+
+  // ═══════════════════════════════════════════════════════════════
+  //  PAYMENT STATUS TRACKING (Simulated — NO real payment API)
+  // ═══════════════════════════════════════════════════════════════
+
+  /**
+   * Returns the current payment status for a claim.
+   * Uses lazy evaluation: on each read, checks elapsed time since
+   * approval and simulates progression through the payment pipeline.
+   *
+   * Timeline (from approval moment):
+   *   0 – 2 min  →  PROCESSING
+   *   2 – 5 min  →  DELAYED  (only if fraudScore ≥ 35)
+   *   > 2 min    →  COMPLETED (low-risk claims)
+   *   > 5 min    →  COMPLETED (all claims, including delayed)
+   */
+  async getPaymentStatus(claimId) {
+    const db = await dbManager.getData();
+    const claim = db.claims.find(c => c.claimId === claimId);
+    if (!claim) return null;
+
+    // Only approved claims enter the payment pipeline
+    if (claim.status !== 'Approved') {
+      return {
+        claimId: claim.claimId,
+        status: 'NOT_INITIATED',
+        lastUpdated: claim.updatedAt || claim.createdAt,
+      };
+    }
+
+    // Bootstrap: seeded claims that were approved before this feature existed
+    if (!claim.paymentStatus || claim.paymentStatus === 'NOT_INITIATED') {
+      claim.paymentStatus = 'PROCESSING';
+      claim.paymentUpdatedAt = claim.processedAt || claim.updatedAt || claim.createdAt;
+    }
+
+    // Simulate time-based progression
+    const approvalTime = new Date(claim.processedAt || claim.updatedAt || claim.createdAt).getTime();
+    const elapsed = Date.now() - approvalTime;
+    const MINUTE = 60 * 1000;
+    const fraudScore = claim.fraudAnalysis?.fraudScore ?? 0;
+    const isHighRisk = fraudScore >= 35;
+
+    let dirty = false;
+
+    if (claim.paymentStatus === 'PROCESSING') {
+      if (elapsed > 5 * MINUTE) {
+        // All claims complete after 5 minutes
+        claim.paymentStatus = 'COMPLETED';
+        claim.paymentUpdatedAt = new Date().toISOString();
+        dirty = true;
+      } else if (elapsed > 2 * MINUTE && isHighRisk) {
+        // High-risk claims get delayed between 2-5 min
+        claim.paymentStatus = 'DELAYED';
+        claim.paymentUpdatedAt = new Date().toISOString();
+        dirty = true;
+      } else if (elapsed > 2 * MINUTE && !isHighRisk) {
+        // Low-risk claims complete after 2 min
+        claim.paymentStatus = 'COMPLETED';
+        claim.paymentUpdatedAt = new Date().toISOString();
+        dirty = true;
+      }
+    } else if (claim.paymentStatus === 'DELAYED') {
+      if (elapsed > 5 * MINUTE) {
+        claim.paymentStatus = 'COMPLETED';
+        claim.paymentUpdatedAt = new Date().toISOString();
+        dirty = true;
+      }
+    }
+
+    if (dirty) {
+      await dbManager.saveData();
+    }
+
+    return {
+      claimId: claim.claimId,
+      status: claim.paymentStatus,
+      lastUpdated: claim.paymentUpdatedAt,
+    };
+  },
+
   async getImagesByFarmId(farmId) {
     const db = await dbManager.getData();
     if (!db.images) return [];

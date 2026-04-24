@@ -141,6 +141,18 @@ router.get('/claim/:id', async (req, res) => {
   }
 });
 
+// ── PAYMENT STATUS (Read-only tracking — NO real payment API) ─
+router.get('/payment-status/:claimId', async (req, res) => {
+  try {
+    const result = await appStore.getPaymentStatus(req.params.claimId);
+    if (!result) return new ApiResponse(404, 'Claim not found').send(res);
+    new ApiResponse(200, 'Payment status retrieved', result).send(res);
+  } catch (err) {
+    console.error('[MOBILE] GET /payment-status/:claimId error:', err.message);
+    new ApiResponse(500, 'Internal server error').send(res);
+  }
+});
+
 // ── WEATHER MODULE ───────────────────────────────────────────
 
 router.get('/weather/:location', async (req, res) => {

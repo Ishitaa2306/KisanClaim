@@ -81,6 +81,16 @@ export default function Claims() {
     }
   }, [statusFilter]);
 
+  const handleUpdateStatus = async (claimId, newStatus) => {
+    try {
+      await api.updateClaimStatus(claimId, newStatus);
+      setClaims(prev => prev.map(c => c.claimId === claimId ? { ...c, status: newStatus } : c));
+    } catch (err) {
+      console.error('Failed to update status', err);
+      alert('Failed to update status: ' + err.message);
+    }
+  };
+
   if (error) {
     return (
       <Card className="p-8 text-center max-w-lg mx-auto mt-20 border-red-100 bg-red-50">
@@ -214,10 +224,27 @@ export default function Claims() {
                   </td>
                   
                   <td className="py-4 px-6">
-                    <span className={`inline-flex items-center px-2.5 py-1 rounded-md text-[11px] font-bold uppercase tracking-wider ${statusInfo.color}`}>
-                      <span className={`w-1.5 h-1.5 rounded-full mr-1.5 ${statusInfo.color.replace('bg-', 'bg-').replace('100', '500').split(' ')[0]}`}></span>
-                      {statusInfo.label}
-                    </span>
+                    {statusInfo.label === 'Pending' ? (
+                      <div className="flex gap-2">
+                        <button 
+                          onClick={(e) => { e.stopPropagation(); handleUpdateStatus(claim.claimId, 'Approved'); }}
+                          className="px-3 py-1 bg-green-100 hover:bg-green-200 text-green-700 rounded-md text-[11px] font-bold uppercase tracking-wider transition-colors"
+                        >
+                          Accept
+                        </button>
+                        <button 
+                          onClick={(e) => { e.stopPropagation(); handleUpdateStatus(claim.claimId, 'Rejected'); }}
+                          className="px-3 py-1 bg-red-100 hover:bg-red-200 text-red-700 rounded-md text-[11px] font-bold uppercase tracking-wider transition-colors"
+                        >
+                          Reject
+                        </button>
+                      </div>
+                    ) : (
+                      <span className={`inline-flex items-center px-2.5 py-1 rounded-md text-[11px] font-bold uppercase tracking-wider ${statusInfo.color}`}>
+                        <span className={`w-1.5 h-1.5 rounded-full mr-1.5 ${statusInfo.color.replace('bg-', 'bg-').replace('100', '500').split(' ')[0]}`}></span>
+                        {statusInfo.label}
+                      </span>
+                    )}
                   </td>
                 </tr>
               )})}
