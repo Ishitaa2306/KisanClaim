@@ -118,7 +118,7 @@ const MobileLogin = () => {
       <div className="px-8 flex-1 z-20 flex flex-col">
         <div className="mb-10">
           <h1 className="text-4xl font-black text-gray-900 tracking-tight mb-2 uppercase">
-            {step === 1 ? t('login_title') : t('verify_otp')}
+            {step === 1 ? t('kisanclaim') : t('verify_otp')}
           </h1>
           <p className="text-gray-500 text-sm font-medium">
             {step === 1 ? t('login_subtitle') : t('enter_otp')}

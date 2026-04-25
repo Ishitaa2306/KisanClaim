@@ -193,7 +193,7 @@ export default function Claims() {
                 return (
                 <tr 
                   key={claim.claimId} 
-                  onClick={() => navigate(`/farm/${claim.farmId}`)}
+                  onClick={() => navigate(`/farm/${claim.farmId}?claimId=${claim.claimId}`)}
                   className="hover:bg-blue-50/30 transition-colors group cursor-pointer"
                 >
                   <td className="py-4 px-6 text-sm font-bold text-slate-900 tracking-tight">

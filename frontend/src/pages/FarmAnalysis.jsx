@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react'
 import { Card } from '../components/ui/Card'
 import { Badge } from '../components/ui/Badge'
 import { MapPin, TrendingUp, ShieldCheck, Tractor, Bot, Loader2, AlertTriangle, FileText, Activity, Thermometer, CloudRain, Droplets, Calendar, Zap, AlertCircle, Camera, Clock, Smartphone, Banknote, CheckCircle2, AlertOctagon, TimerReset } from 'lucide-react'
-import { useParams, useNavigate } from 'react-router-dom'
+import { useParams, useNavigate, useLocation } from 'react-router-dom'
 import { LineChart, Line, XAxis, Tooltip, ResponsiveContainer, CartesianGrid, AreaChart, Area, YAxis } from 'recharts'
 import { api } from '../services/api'
 
@@ -18,6 +18,10 @@ const formatCurrency = (amount) => {
 export default function FarmAnalysis() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const reactLocation = useLocation();
+  const queryParams = new URLSearchParams(reactLocation.search);
+  const claimId = queryParams.get('claimId');
+  
   const [farm, setFarm] = useState(null);
   const [analysis, setAnalysis] = useState(null);
   const [groundImages, setGroundImages] = useState([]);
@@ -58,7 +62,14 @@ export default function FarmAnalysis() {
     async function loadGroundEvidence() {
       try {
         setImagesLoading(true);
-        const data = await api.getFarmImages(id);
+        let data;
+        if (claimId) {
+          // If we came from a specific claim, show ONLY that claim's images
+          data = await api.getClaimImages(claimId);
+        } else {
+          // Fallback to farm-wide images if no specific claim is selected
+          data = await api.getFarmImages(id);
+        }
         setGroundImages(data || []);
       } catch (err) {
         console.error("Failed to fetch ground evidence:", err);

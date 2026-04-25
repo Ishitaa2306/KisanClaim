@@ -140,5 +140,12 @@ export const api = {
    */
   getPaymentStatus: async (claimId) => {
     return fetchApi(`/api/payment-status/${claimId}`);
+  },
+
+  /**
+   * Get images specifically for a claim
+   */
+  getClaimImages: async (claimId) => {
+    return fetchApi(`/api/claim/${claimId}/images`);
   }
 };

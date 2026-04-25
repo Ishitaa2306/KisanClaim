@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { 
   ChevronLeft, ImagePlus, AlertCircle, ShieldAlert, 
   CloudRain, Camera, FileText, CheckCircle2, Loader2,
-  AlertTriangle, Lightbulb
+  AlertTriangle, Lightbulb, X, Plus
 } from 'lucide-react';
 import { useMobile } from '../context/MobileContext';
 import SmartVoiceInput from '../../../components/voice/SmartVoiceInput';
@@ -19,8 +19,7 @@ const MobileClaim = () => {
   const [advisoryReport, setAdvisoryReport] = useState(null);
   const [submitting, setSubmitting] = useState(false);
   const [errorVisible, setErrorVisible] = useState(null);
-  const [selectedFile, setSelectedFile] = useState(null);
-  const [previewUrl, setPreviewUrl] = useState(null);
+  const [uploadedImages, setUploadedImages] = useState([]); // Array of { id, file, preview }
   const [isOffline, setIsOffline] = useState(!navigator.onLine);
   const [offlineResult, setOfflineResult] = useState(null);
 
@@ -59,21 +58,41 @@ const MobileClaim = () => {
   }, [farmerId]);
 
   const handleFileChange = (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      setSelectedFile(file);
-      setPreviewUrl(URL.createObjectURL(file));
+    const files = Array.from(e.target.files);
+    if (files.length > 0) {
+      const newImages = files.map(file => ({
+        id: Math.random().toString(36).substr(2, 9),
+        file,
+        preview: URL.createObjectURL(file)
+      }));
+      setUploadedImages(prev => [...prev, ...newImages].slice(0, 5)); // Max 5 images
     }
+    // Reset input so same file can be uploaded again if deleted
+    e.target.value = '';
+  };
+
+  const removeImage = (id) => {
+    setUploadedImages(prev => {
+      const filtered = prev.filter(img => img.id !== id);
+      // Clean up object URL
+      const removed = prev.find(img => img.id === id);
+      if (removed) URL.revokeObjectURL(removed.preview);
+      return filtered;
+    });
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setErrorVisible(null);
+
     if (!damageType) return setErrorVisible(t('error_damage_type'));
+    if (uploadedImages.length === 0) return setErrorVisible(t('error_image_required') || 'Please upload at least one image');
 
     setSubmitting(true);
     try {
-      let imageUrls = ["https://images.unsplash.com/photo-1583245553131-0e7d36409271"]; 
+      // In a real app, we would upload these files to S3/Cloudinary and get URLs
+      // For this demo, we simulate image URLs
+      const imageUrls = uploadedImages.map((img, idx) => `https://images.unsplash.com/photo-1583245553131-0e7d36409271?idx=${idx}`); 
       const farmId = data?.linkedFarmIds?.[0] || 'NEW-REG';
 
       if (!navigator.onLine) {
@@ -87,6 +106,7 @@ const MobileClaim = () => {
           claimAmount: 0,
           createdAt: new Date().toISOString(),
           status: decision.status,
+          images: imageUrls,
           isOffline: true,
           offlineReason: decision.reason
         };
@@ -212,37 +232,61 @@ const MobileClaim = () => {
 
           {/* Evidence Upload */}
           <div className="space-y-3">
-            <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1">{t('upload_evidence')}</label>
-            <div 
-              className={`w-full aspect-video rounded-[28px] border-2 border-dashed transition-all flex flex-col items-center justify-center group cursor-pointer relative overflow-hidden ${
-                previewUrl ? 'border-green-500 bg-green-50' : 'border-gray-200 bg-white hover:border-gray-300'
-              }`}
-              onClick={() => fileInputRef.current?.click()}
-            >
-              {previewUrl ? (
-                <div className="w-full h-full relative">
-                  <img src={previewUrl} alt="Preview" className="w-full h-full object-cover" />
-                  <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                    <span className="text-xs font-bold text-white tracking-widest uppercase">{t('click_to_upload')}</span>
-                  </div>
-                </div>
-              ) : (
-                <>
-                  <div className="w-16 h-16 bg-gray-50 rounded-3xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300 border border-gray-100">
-                    <Camera className="text-gray-400 group-hover:text-green-600" size={32} />
-                  </div>
-                  <span className="text-[10px] font-bold text-gray-900 uppercase tracking-[0.2em] mb-1">{t('tap_to_upload')}</span>
-                  <span className="text-[9px] text-gray-400 font-medium uppercase tracking-widest">{t('upload_limits')}</span>
-                </>
-              )}
-              <input 
-                type="file" 
-                ref={fileInputRef} 
-                className="hidden" 
-                accept="image/*"
-                onChange={handleFileChange}
-              />
+            <div className="flex justify-between items-center px-1">
+              <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">{t('upload_evidence')}</label>
+              <span className={`text-[9px] font-bold uppercase tracking-widest ${uploadedImages.length > 0 ? 'text-green-600' : 'text-red-500'}`}>
+                {uploadedImages.length}/5 {t('images')}
+              </span>
             </div>
+
+            {/* Image Preview Grid */}
+            {uploadedImages.length > 0 && (
+              <div className="grid grid-cols-3 gap-3 mb-4">
+                {uploadedImages.map((img) => (
+                  <div key={img.id} className="relative aspect-square rounded-2xl overflow-hidden border border-gray-100 shadow-sm group">
+                    <img src={img.preview} alt="Evidence" className="w-full h-full object-cover" />
+                    <button 
+                      type="button"
+                      onClick={() => removeImage(img.id)}
+                      className="absolute top-1 right-1 w-6 h-6 bg-black/60 backdrop-blur-md rounded-full flex items-center justify-center text-white border border-white/20 active:scale-90 transition-all"
+                    >
+                      <X size={14} />
+                    </button>
+                  </div>
+                ))}
+                {uploadedImages.length < 5 && (
+                  <div 
+                    onClick={() => fileInputRef.current?.click()}
+                    className="aspect-square rounded-2xl border-2 border-dashed border-gray-200 bg-white flex flex-col items-center justify-center text-gray-400 hover:border-green-500 hover:text-green-600 transition-all"
+                  >
+                    <Plus size={20} />
+                    <span className="text-[8px] font-bold uppercase mt-1">Add More</span>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {uploadedImages.length === 0 && (
+              <div 
+                className="w-full aspect-video rounded-[28px] border-2 border-dashed border-gray-200 bg-white transition-all flex flex-col items-center justify-center group cursor-pointer relative overflow-hidden hover:border-gray-300"
+                onClick={() => fileInputRef.current?.click()}
+              >
+                <div className="w-16 h-16 bg-gray-50 rounded-3xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300 border border-gray-100">
+                  <Camera className="text-gray-400 group-hover:text-green-600" size={32} />
+                </div>
+                <span className="text-[10px] font-bold text-gray-900 uppercase tracking-[0.2em] mb-1">{t('tap_to_upload')}</span>
+                <span className="text-[9px] text-gray-400 font-medium uppercase tracking-widest">{t('at_least_one_image')}</span>
+              </div>
+            )}
+
+            <input 
+              type="file" 
+              ref={fileInputRef} 
+              className="hidden" 
+              accept="image/*"
+              multiple
+              onChange={handleFileChange}
+            />
           </div>
 
           {errorVisible && (
@@ -255,8 +299,12 @@ const MobileClaim = () => {
           <div className="pt-4">
             <button 
               type="submit"
-              disabled={submitting}
-              className="w-full bg-green-600 hover:bg-green-500 text-white py-4 rounded-[20px] font-bold text-xs tracking-[0.2em] uppercase transition-all shadow-xl shadow-green-100 active:scale-95 flex items-center justify-center gap-3"
+              disabled={submitting || uploadedImages.length === 0}
+              className={`w-full py-4 rounded-[20px] font-bold text-xs tracking-[0.2em] uppercase transition-all flex items-center justify-center gap-3 active:scale-95 ${
+                uploadedImages.length === 0 
+                  ? 'bg-gray-200 text-gray-400 cursor-not-allowed' 
+                  : 'bg-green-600 hover:bg-green-500 text-white shadow-xl shadow-green-100'
+              }`}
             >
               {submitting ? (
                 <>
@@ -270,6 +318,11 @@ const MobileClaim = () => {
                 </>
               )}
             </button>
+            {uploadedImages.length === 0 && (
+              <p className="text-center text-[9px] font-bold text-red-500 uppercase tracking-widest mt-4 animate-pulse">
+                {t('error_image_required') || 'Please upload at least one image'}
+              </p>
+            )}
           </div>
         </form>
       </div>

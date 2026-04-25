@@ -101,8 +101,8 @@ export const MobileContainer = () => {
 
   return (
     <MobileProvider>
-      <div className="w-full h-screen flex justify-center bg-gray-900 font-sans">
-        <div className="w-full max-w-md h-full bg-white relative shadow-2xl flex flex-col overflow-hidden sm:rounded-[32px] sm:h-[95vh] sm:my-auto sm:border-[8px] sm:border-gray-800 ring-1 ring-gray-200">
+      <div className="w-full h-screen flex items-center justify-center bg-gradient-to-br from-slate-100 via-gray-200 to-slate-300 font-sans overflow-hidden">
+        <div className="w-full h-full md:max-w-[450px] md:h-[95vh] md:rounded-[2.5rem] md:shadow-[0_20px_80px_rgba(0,0,0,0.15)] md:border md:border-white/60 md:ring-1 md:ring-black/5 bg-white relative flex flex-col overflow-hidden">
           <MobileAppRouter />
           {!isAuthScreen && (
             <>

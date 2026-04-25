@@ -607,6 +607,20 @@ const appStore = {
       .sort((a, b) => new Date(b.uploadedAt) - new Date(a.uploadedAt));
   },
 
+  async getImagesByClaimId(claimId) {
+    const db = await dbManager.getData();
+    const claim = db.claims.find(c => c.claimId === claimId);
+    if (!claim || !claim.images) return [];
+    
+    // Map string URLs to the expected image object format
+    return claim.images.map((url, idx) => ({
+      imageUrl: url,
+      description: `Ground evidence for claim ${claimId}.`,
+      uploadedAt: claim.createdAt,
+      type: 'Evidence'
+    }));
+  },
+
   async saveFarmImage(imageData) {
     const db = await dbManager.getData();
     if (!db.images) db.images = [];

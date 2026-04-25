@@ -141,6 +141,16 @@ router.get('/claim/:id', async (req, res) => {
   }
 });
 
+router.get('/claim/:id/images', async (req, res) => {
+  try {
+    const images = await appStore.getImagesByClaimId(req.params.id);
+    new ApiResponse(200, `Images for claim ${req.params.id} retrieved`, images).send(res);
+  } catch (err) {
+    console.error('[MOBILE] GET /claim/:id/images error:', err.message);
+    new ApiResponse(500, 'Internal server error').send(res);
+  }
+});
+
 // ── PAYMENT STATUS (Read-only tracking — NO real payment API) ─
 router.get('/payment-status/:claimId', async (req, res) => {
   try {
